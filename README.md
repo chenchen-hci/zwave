@@ -27,7 +27,7 @@ In specific, add ` env_keep += "PYTHONPATH" `to ` /etc/sudoers `;
 
 For read mode [-r], 2 arguments are required, indicating the start node (inclusive) and end node(exclusive). If both arguments are -1, then all nodes in hosted network will be scanned! 
 
-*[Examples]*
+<b>[Examples]</b><br>
 ..* ` sudo python sens_zwave.py -r -1 -1 ` indicates read all nodes in hosted network;
 ..* ` sens_zwave.py -r 2 3 ` indicates read node 2 in hosted network;
 ..* ` sens_zwave.py -r 1 3 ` indicates read node 1 to 2 in hosted network; 
