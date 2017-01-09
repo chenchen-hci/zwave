@@ -27,7 +27,7 @@ In specific, add ` env_keep += "PYTHONPATH" `to ` /etc/sudoers `;
 ## Getting Started
 
 *  After pairing the zwave stick and zwave node device, plug zwave stick into the usb port of host. This step enable zwave stick to create a zwave mesh network;
-*  Run `sudo bash find_port.sh` to find the file path of zwave stick, which is normally in the format of `/dev/ttyACM&lt;x&gt;`;
+*  Run `sudo bash find_port.sh` to find the file path of zwave stick, which is normally in the format of `/dev/ttyACM<x>;`;
 *  Modify the value of `device` in `/Connectors/config/zwave.json` according to the value found in previous step;
 *  Run `sudo python check_match.py` to make sure the zwave network is fully functioned;
 *  Run `sudo python sens_zwave.py` to connecting zwave devices and BuildingDepot stack;
