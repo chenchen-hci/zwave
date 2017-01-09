@@ -1,0 +1,5 @@
+{
+	"device": "/dev/ttyACM0",
+	"log": "None",
+	"log_file": "OZW_Log.log"
+}
