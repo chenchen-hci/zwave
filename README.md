@@ -12,26 +12,26 @@ The code file in this repo includes:
 
 ## Configurations
 ### Library
-The '''python-openzwave''' library is needed for this program, make sure to install it according to write-up available at <a href="https://github.com/OpenZWave/python-openzwave"> here; </a>
+The `python-openzwave` library is needed for this program, make sure to install it according to write-up available at <a href="https://github.com/OpenZWave/python-openzwave"> here; </a>
 
 ### Add Python Search Path to Sudoers
-As the program is needed to run using super user permission. A copy of python search path need be added to '''/etc/sudoers''' config file.
+As the program is needed to run using super user permission. A copy of python search path need be added to `/etc/sudoers` config file.
 
-In specific, add ''' env_keep += "PYTHONPATH" ''' to ''' /etc/sudoers ''';
+In specific, add ` env_keep += "PYTHONPATH" `to ` /etc/sudoers `;
 
 ### File Directories
 <ul>
-	<li>Put '''zwave.json''' in the directory of ''' /Connectors/config/ ''';</li>
-	<li>Make a copy of '''/python-openzwave/openzwave''' to '''/Connectors/openzwave/''';</li>
+	<li>Put `zwave.json` in the directory of ` /Connectors/config/ `;</li>
+	<li>Make a copy of `/python-openzwave/openzwave` to `/Connectors/openzwave/`;</li>
 </ul>
 
 ## Getting Started
 <ul>
 	<li>After pairing the zwave stick and zwave node device, plug zwave stick into the usb port of host. This step enable zwave stick to create a zwave mesh network; </li>
-	<li>Run '''sudo bash find_port.sh''' to find the file path of zwave stick, which is normally in the format of '''/dev/ttyACM&lt;x&gt;'''; </li>
-	<li>Modify the value of '''device''' in '''/Connectors/config/zwave.json''' according to the value found in previous step; </li>
-	<li>Run '''sudo python check_match.py''' to make sure the zwave network is fully functioned;</li>
-	<li>Run '''sudo python sens_zwave.py''' to connecting zwave devices and BuildingDepot stack;</li>
+	<li>Run `sudo bash find_port.sh` to find the file path of zwave stick, which is normally in the format of `/dev/ttyACM&lt;x&gt;`; </li>
+	<li>Modify the value of `device` in `/Connectors/config/zwave.json` according to the value found in previous step; </li>
+	<li>Run `sudo python check_match.py` to make sure the zwave network is fully functioned;</li>
+	<li>Run `sudo python sens_zwave.py` to connecting zwave devices and BuildingDepot stack;</li>
 </ul>
 
 <hr/>
