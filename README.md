@@ -23,6 +23,14 @@ In specific, add ` env_keep += "PYTHONPATH" `to ` /etc/sudoers `;
 *  Put `zwave.json` in the directory of ` /Connectors/config/ `;
 *  Make a copy of `/python-openzwave/openzwave` to `/Connectors/openzwave/`;
 
+## Arguments
+
+For read mode [-r], 2 arguments are required, indicating the start node (inclusive) and end node(exclusive). If both arguments are -1, then all nodes in hosted network will be scanned! 
+
+*[Examples]*
+..* ` sudo python sens_zwave.py -r -1 -1 ` indicates read all nodes in hosted network;
+..* ` sens_zwave.py -r 2 3 ` indicates read node 2 in hosted network;
+..* ` sens_zwave.py -r 1 3 ` indicates read node 1 to 2 in hosted network; 
 
 ## Getting Started
 
@@ -30,10 +38,11 @@ In specific, add ` env_keep += "PYTHONPATH" `to ` /etc/sudoers `;
 *  Run `sudo bash find_port.sh` to find the file path of zwave stick, which is normally in the format of `/dev/ttyACM<x>;`;
 *  Modify the value of `device` in `/Connectors/config/zwave.json` according to the value found in previous step;
 *  Run `sudo python check_match.py` to make sure the zwave network is fully functioned;
-*  Run `sudo python sens_zwave.py` to connecting zwave devices and BuildingDepot stack;
+*  Run `sudo python sens_zwave.py [Args]` to connecting zwave devices and BuildingDepot stack;
+
 
 
 <hr/>
-<i> updated on Sunday, 8 January, 2017 </i>
+<i> updated on Monday, 9 January, 2017 </i>
 
 

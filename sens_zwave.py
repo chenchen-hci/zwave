@@ -127,13 +127,6 @@ class ZwaveNetwork:
         self.network.stop()
         print("INFO: Network stopped")
 
-    def get_nodes(self):
-    	"""
-    	Return number of network nodes (sleep/awake)
-    	"""
-        return self.network.nodes
-
-
     def node_info(self, node_id):
     	"""
     	Obtain the mac_id of specified nodes. The mac_id will be represented byproduct id (16bits).
@@ -201,7 +194,12 @@ def main(arguments):
 	Accept command to either read or actuate (not implemented) the nodes in zwave network.
 
 	Args:
-		1. r/w: r indicates read from sensor, while w indicates write to sensor
+		1. [-r/w]: -r indicates read from sensor, while -w indicates write to sensor;
+		2. arguments;
+		[Example]
+		$ sens_zwave.py -r -1 -1 indicates read all nodes in hosted network;
+		$ sens_zwave.py -r 2 3 indicates read node 2 in hosted network;
+		$ sens_zwave.py -r 1 3 indicates read node 1 to 2 in hosted network;
 	
 	Returns:
         1. If the args is to read energy data from Wemo
@@ -210,19 +208,40 @@ def main(arguments):
                 "HTTP Error 400": "Bad Request"
            }
 	"""
-	if len(arguments) < 2:
+	if len(arguments) < 4:
 		sys.exit("Error: one argument is required")
 	
 	cmd = arguments[1]
-	if cmd == 'r':
+	if cmd == '-r':
 		network = ZwaveNetwork()
 		network.network_init()
 		network.network_awake()
 
-		for node in network.get_nodes():
-			data = network.get_device_data(node)
-			print(data)
-			print(get_json(json.dumps(data)))
+		# parse input args
+		try:
+			start_node = int(arguments[2])
+			end_node = int(arguments[3])
+		except Exception as e:
+			sys.exit("Input args should be a number")
+
+		# check input args
+		if not ((start_node == -1 and end_node == -1) or \
+			(start_node > 0 and \
+			start_node <= network.network.nodes_count and \
+			end_node > start_node and \
+			end_node <= network.network.nodes_count + 1)):
+			sys.exit("Bad arguments of r.")
+
+		# process input args
+		if start_node == "-1" and end_node == "-1":
+			for node in network.network.nodes:
+				data = network.get_device_data(node)
+				print(data)
+				print(get_json(json.dumps(data)))
+		else:
+			for node in range(start_node, end_node):
+				data = network.network.nodes:
+				print(get_json(json.dumps(data)))
 		network.network_stop()
 	else:
 		sys.exit("Not implemented")
