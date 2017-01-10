@@ -20,6 +20,8 @@ The device conector will do following things after being called:
 *  running/sleep forever until any one of nodes in mesh network send data. The program will wake up and start a new thread to process the data
 *  The program will run forever untill the process is killed by SIGKILL/SIGINT (default action)
 
+In particular, the resolution control feature has been integrated into the program for making the system more flexible. For example, considering multisensor6 node, the `config` item in json file shows `"111": "30"`. This means sending sensed data for every 30 second which is much higher than default value, i.e. 1 hour. Other device configurations can be added to `zwave.json` as well.
+
 ## Files
 The code file in this repo includes:
 
