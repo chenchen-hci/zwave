@@ -149,12 +149,20 @@ class ZwaveNetwork:
 
 	def node_info(self, node_id):
 		"""
-			Obtain the mac_id of specified nodes. The mac_id will be represented byproduct id (16bits).
+			Obtain the mac_id of specified nodes. The mac_id will be represented by node id, which are (48 bits):
+				- manufacturer id [47 - 32]
+				- product type [31 - 16]
+				- product id [15 - 0]
     	
 			Arg: the node id which is larger or equal to 1
 			Return: None """
 		node = self.network.nodes[node_id]
-		self.sdata["mac_id"] = node.product_id
+		# get and reformat mac id (node id)
+		mac_str= node.manufacturer_id[2:] + \
+								node.product_type[2:] + \
+								node.product_id[2:]
+		self.sdata["mac_id"] = ':'.join(mac_str[i:i+2] \
+								for i in range(0, len(mac_str), 2))
 
 	def sensor_info(self, node_id):
 		"""

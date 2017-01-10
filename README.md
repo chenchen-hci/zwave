@@ -42,6 +42,14 @@ For read mode [-r], 2 arguments are required, indicating the start node (inclusi
 
 <i>Dead Node: A node is loose connection with network intentionally or accidently, which, for instance, may be caused by accidently power outage etc.</i>
 
+## Notes
+
+* Units of sensed data retrived from Multisensor6:
+** Temperature: F
+** Humidity: %
+** Luminance: Lux
+** Ultraviolet: <None Unit>
+
 
 <hr/>
 <i> updated on Monday, 9 January, 2017 </i>
