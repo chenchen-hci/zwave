@@ -12,26 +12,29 @@ import logging
 import os
 import resource
 import openzwave
+import copy
+from threading import Thread
 from openzwave.node import ZWaveNode
 from openzwave.value import ZWaveValue
 from openzwave.scene import ZWaveScene
 from openzwave.controller import ZWaveController
 from openzwave.network import ZWaveNetwork
 from openzwave.option import ZWaveOption
+from louie import dispatcher, All
 
 """
 	About:
-	Device Connector - Zwave Product
+	Device Connector - Zwave Product [listening]
 
 	Descriptions:
-	This module is a device connector to connect zwave products such as Aeotec   Multisensor6 integrated sensors etc. During runtime, an instance of zwave network will be created which would collect the data in each nodes and publish to BuildingDepot stack.
+	This module is a device connector to connect zwave products such as Aeotec   Multisensor6 integrated sensors etc. During runtime, an instance of zwave network will be created and set to listning mode. At any time when any nodes in mesh network send value updated notification, the program will receive a value and start a new thread to post values to BuildingDepot.
 
 	Configurations:
 	$ Find usb port of zwave stick:
 	To do this, run find_port.sh script with super user permission in same directory (sudo bash find_port.sh), and find the file path, which normally shall be "/dev/ttyACM<x>".
 
 	$ Modify zwave.json file:
-	Modify the device path according to previous steps, as well as the log level and log file name(or path).
+	Modify the device path according to previous steps, as well as the log level and log file name(or path). In addition, the check item in json file indicates what value of which nodes in mesh network will be listened. Finally, the MAX_THREAD item defines the maximum number of thread that allows to process simultaneously.
 
 	$ Set the file name/path in this program:
 	This can be retrived from CONFIG variable in this program, which is the file name of json config file.
@@ -43,21 +46,33 @@ from openzwave.option import ZWaveOption
 
 	How to Start?
 	As the program will communicate with zwave hub controller (zwave stick), it need be launched with sudo permission:
-	sudo python sens_zwave.py
+		sudo python sens_zwave.py
 """
 
 CONFIG = "zwave"         # zwave.json file
+MAX_THREAD = 1
+thread_counter = 1
+check = {}               # define the item to be listened
 
 class ZwaveNetwork:
 	def __init__(self):
 		"""
 			Initialize using zwave.json config file defined in CONFIG variable
 		"""
+		# check will not be changed once it is initialized
+		global check
+		global MAX_THREAD
 		multisensor_cred = Setting(CONFIG)
 		self.device = str(multisensor_cred.setting["device"])
 		self.log = str(multisensor_cred.setting["log"])
 		self.log_file = str(multisensor_cred.setting["log_file"])
-		self.sdata = {} # sdata is used to bufer sensed data
+		# format check item
+		for k, v in multisensor_cred.setting["check"].items():
+			item = []
+			for node in v:
+				item.append(str(node))
+			check[int(k)] = item 
+		MAX_THREAD = int(multisensor_cred.setting["MAX_THREAD"])
 
 	def network_init(self):
 		"""
@@ -127,7 +142,10 @@ class ZwaveNetwork:
 			This function aims to check whether the node (specified by node_id) is connected in network. If not, the value, which is old historical data, will be abandoned.
 
 			Args: node id of specified nodes in network
-			Return: ture if node is still connected in the network, or otherwise """
+			Return: ture if node is still connected in the network, or otherwise 
+
+			Note: this function is used for debugging purpose
+		"""
 		if self.network.manager.isNodeFailed(self.network.home_id, node_id):
 			print("WARN: Node [{}] is failed!" .format(node_id))
 			return False
@@ -138,141 +156,100 @@ class ZwaveNetwork:
 			This function aims to check whether ALL nodes is connected in network. If any 'dead' node is detected, the function will return false.
 
 			Args: None
-			Return: ture if all node is still connected in the network, or otherwise """
+			Return: ture if all node is still connected in the network, or otherwise
+
+			Note: this function is used for debugging purpose
+		"""
 		for node in self.network.nodes:
 			if not self.check_node_connection(node):
 				return False
 		return True
 
-	def node_info(self, node_id):
+	@staticmethod
+	def get_mac_id(node):
 		"""
-			Obtain the mac_id of specified nodes. The mac_id will be represented by node id, which are (48 bits):
-				- manufacturer id [47 - 32]
-				- product type [31 - 16]
-				- product id [15 - 0]
-    	
-			Arg: the node id which is larger or equal to 1
-			Return: None """
-		node = self.network.nodes[node_id]
-		# get and reformat mac id (node id)
+			Assemble manufacturer id, product type and product id to standard mac assress format.
+
+			Args: instance of a node
+			Return: String of standard mac address format
+		"""
 		mac_str= node.manufacturer_id[2:] + \
-								node.product_type[2:] + \
-								node.product_id[2:]
-		self.sdata["mac_id"] = ':'.join(mac_str[i:i+2] \
-								for i in range(0, len(mac_str), 2))
+			node.product_type[2:] + \
+			node.product_id[2:]
+		return ':'.join(mac_str[i:i+2] for i in range(0, len(mac_str), 2))
 
-	def sensor_info(self, node_id):
-		"""
-			Obtain sensed data which will be stored into sdata dict.
-			
-			An example of multisensor 6 are:
-			{ 
-				'Luminance': 173.0, 
-				'Ultraviolet': 0.0, 
-				'Sensor': True, 
-				'Relative Humidity': 8.0, 
-				'Temperature': 66.4000015258789
+def thread_post_bd(data):
+	"""
+		a thread routine to post the passed in data to building depot
+	
+		Args: snesed data:
+			sensor_data: {
+				mac_id: <node id (48bits)>,
+				<All other sensor data>
 			}
+	"""
+	global thread_counter
+	print(data)
+	print(get_json(json.dumps(data)))   # has some issues here!
+	thread_counter -= 1
 
-			Arg: the node id which is larger or equal to 1
-			Return: None """
-		node = self.network.nodes[node_id]
-		for val in node.get_sensors():
-			self.sdata[node.values[val].label] = node.get_sensor_value(val)
+def louie_network_ready():
+	"""
+		initial signal handler
+	"""
+	dispatcher.connect(louie_value_update, ZWaveNetwork.SIGNAL_VALUE)
 
-	def battery_info(self, node_id):
-		"""
-			Obtain battery information, which will be stored in sdata dict.
+def louie_value_update(network, node, value):
+	"""
+		signal handler when value is received
+	"""
+	global MAX_THREAD
+	global thread_counter
+	if node.node_id in check \
+		and value.label in check[node.node_id] \
+		and thread_counter < MAX_THREAD:
+		data = {"sensor_data":{}}
+		sdata = {}
+		sdata["mac_id"] = ZwaveNetwork.get_mac_id(node)
 
-			Arg: the node id which is larger or equal to 1
-			Return: None """
-		node = self.network.nodes[node_id]
-		for val in node.get_battery_levels():
-			self.sdata[node.values[val].label] = node.get_battery_level(val)
+		sdata[value.label] = value.data_as_string
+		data["sensor_data"].update(sdata)
+		thread_counter += 1
+		Thread(target=thread_post_bd, args=(copy.deepcopy(data),)).start()
 
-	def get_device_data(self, node_id):
-		"""
-			Obtain all sensor/meta data using node_info(), sensor_info() and battery_info().
-
-			Args: the node id which is larger or equal to 1
-			Return: Formated dictionary:
-			{
-				"sensor_data":
-				{
-					<All sensor data>
-				}
-			} """
-		self.node_info(node_id) 
-		self.sensor_info(node_id)
-		self.battery_info(node_id)
-		# update the data format
-		data = {"sensor_data": {}}
-		data["sensor_data"].update(self.sdata)
-		self.sdata = {}  # reset buffer
-		return data
-
-def main(arguments):
+def main(cmd):
 	"""
 		Accept command to either read or actuate (not implemented) the nodes in zwave network.
 
 		Args:
-			1. [-r/w]: -r indicates read from sensor, while -w indicates write to sensor;
-			2. arguments;
-			[Example]
-				$ sens_zwave.py -r -1 -1 indicates read all nodes in hosted network;
-				$ sens_zwave.py -r 2 3 indicates read node 2 in hosted network;
-				$ sens_zwave.py -r 1 3 indicates read node 1 to 2 in hosted network;
+			[-r/w]: -r indicates read from all sensors, while -w indicates write to sensor;
 	
 		Returns:
-			1. If the args is to read energy data from Wemo
+			1. If the args is to read
 				{
 					"success": "True" 
 					"HTTP Error 400": "Bad Request"
 				} 
-	"""
-	if len(arguments) < 4:
-		sys.exit("Bad number of arguments!")
-	
-	cmd = arguments[1]
+	"""	
 	if cmd == '-r':
-		network = ZwaveNetwork()
+		# parse input args
+		network = ZwaveNetwork();
 		network.network_init()
+		dispatcher.connect(louie_network_ready, ZWaveNetwork.SIGNAL_NETWORK_READY)
 		network.network_awake()
 
-		# parse input args
-		try:
-			start_node = int(arguments[2])
-			end_node = int(arguments[3])
-		except Exception as e:
-			sys.exit("Input args should be a number")
+		while True:
+			time.sleep(1000)
 
-		# check input args
-		if not ((start_node == -1 and end_node == -1) or \
-			(start_node > 0 and \
-			start_node <= network.network.nodes_count and \
-			end_node > start_node and \
-			end_node <= network.network.nodes_count + 1)):
-			sys.exit("Bad arguments of r.")
-
-		# process input args
-		if start_node == -1 and end_node == -1:
-			for node in network.network.nodes:
-				if network.check_node_connection(node):
-					print(node)
-					data = network.get_device_data(node)
-					print(data)
-					print(get_json(json.dumps(data)))
-		else:
-			for node in range(start_node, end_node):
-				if network.check_node_connection(node):
-					data = network.get_device_data(node)
-					print(get_json(json.dumps(data)))
 		network.network_stop()
 	else:
 		sys.exit("Not implemented")
 
 if __name__ == "__main__":
-	main(sys.argv)
+	if len(sys.argv) < 2:
+		sys.exit("Bad number of arguments!")
+	else:
+		main(sys.argv[1])
 
 
 

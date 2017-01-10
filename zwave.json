@@ -1,5 +1,13 @@
 {
 	"device": "/dev/ttyACM0",
 	"log": "None",
-	"log_file": "OZW_Log.log"
+	"log_file": "OZW_Log.log",
+	"MAX_THREAD": "512",
+	"check": {
+		"2": ["Burglar", 
+			  "Ultraviolet", 
+			  "Battery Level", 
+			  "Temperature", 
+			  "Humidity"]
+	}
 }
