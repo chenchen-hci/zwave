@@ -66,6 +66,13 @@ class ZwaveNetwork:
 		self.device = str(multisensor_cred.setting["device"])
 		self.log = str(multisensor_cred.setting["log"])
 		self.log_file = str(multisensor_cred.setting["log_file"])
+		self.config = {}
+		# format config dict
+		for config_k, config_v in multisensor_cred.setting["config"].items():
+			item = {}
+			for k, v in config_v.iteritems():
+				item[int(k)] = int(v)	
+			self.config[int(config_k)] = item
 		# format check item
 		for k, v in multisensor_cred.setting["check"].items():
 			item = []
@@ -130,6 +137,27 @@ class ZwaveNetwork:
 			sys.exit("Network is not ready, program abort!")
 		print("\nINFO: Network [{}] awaked!" .format(self.network.home_id_str))
 
+	def config_node(self, node_id):
+		"""
+			config a node specified by node id.
+
+			Args: node id of specific node
+			Return: None
+		"""
+		if node_id in self.config:
+			for k, v in self.config[node_id]:
+				self.networks.nodes[node_id].set_config_param(k, v)
+
+	def config_all_nodes(self):
+		"""
+			config all nodes using parameter and value specified in zwave.json
+
+			Args: None
+			Return: None
+		"""
+		for ndoe_id in self.network.nodes:
+			config_node(node_id)
+
 	def network_stop(self):
 		"""
 			Stop network.
@@ -190,7 +218,7 @@ def thread_post_bd(data):
 	"""
 	global thread_counter
 	print(data)
-	print(get_json(json.dumps(data)))   # has some issues here!
+#	print(get_json(json.dumps(data)))   # has some issues here!
 	thread_counter -= 1
 
 def louie_network_ready():
@@ -233,8 +261,9 @@ def main(cmd):
 	"""	
 	if cmd == '-r':
 		# parse input args
-		network = ZwaveNetwork();
+		network = ZwaveNetwork()
 		network.network_init()
+		network.config_all_nodes()
 		dispatcher.connect(louie_network_ready, ZWaveNetwork.SIGNAL_NETWORK_READY)
 		network.network_awake()
 

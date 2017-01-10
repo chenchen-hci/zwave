@@ -3,11 +3,16 @@
 	"log": "None",
 	"log_file": "OZW_Log.log",
 	"MAX_THREAD": "512",
+	"config": {
+		"2": {
+			"111": "30"
+		}
+	},
 	"check": {
 		"2": ["Burglar", 
 			  "Ultraviolet", 
 			  "Battery Level", 
 			  "Temperature", 
-			  "Humidity"]
+			  "Relative Humidity"]
 	}
 }
