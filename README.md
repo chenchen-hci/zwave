@@ -1,6 +1,10 @@
 # ZWave Device Connector 
 Zwave device connector for BuildingDepotV3.5 [work in progress! :tada:]
 
+## Current Existing Issues:
+`502 Bad Gateway` problems of BuildingDepot server (may caused by configurations of Nginx and FastCGI).
+See <a href="https://github.com/chenchenece/zwave/issues">Issues Page</a>.
+
 ## Two Implementations:
 ### Requesting [`sens_zwave.py`]:
 The device conector will do following things after being called:
