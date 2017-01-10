@@ -51,7 +51,7 @@ For read mode [-r], 2 arguments are required, indicating the start node (inclusi
 * ` sudo python sens_zwave.py -r -1 -1 ` indicates read all nodes in hosted network;
 * ` sens_zwave.py -r 2 3 ` indicates read node 2 in hosted network;
 * ` sens_zwave.py -r 1 3 ` indicates read node 1 to 2 in hosted network; 
-* ` sens_zwave_l.py -r` the `zwave.json` defines while values of which nodes need be listened; 
+* ` sens_zwave_l.py -r` the `zwave.json` defines which values of which nodes need be listened; 
 
 ## Getting Started
 
