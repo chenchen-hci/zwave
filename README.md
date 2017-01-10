@@ -5,7 +5,7 @@ Zwave device connector for BuildingDepotV3.5 [work in progress! :tada:]
 The code file in this repo includes:
 
 *  `sens_zwave.py`: the main device connector program;
-*  `check_match.py`: a debugging tool used to do final check on zwave network configurations and device pairing;
+*  `match.py`: a debugging tool used to do final check on zwave network configurations and device pairing;
 *  `find_port.sh`: run this script to check the file path of USB port of zwave hub controller (zwave stick);
 *  `zwave.json`: configuration file which need be put in `/Connectors/config/` directory;
 
@@ -37,9 +37,10 @@ For read mode [-r], 2 arguments are required, indicating the start node (inclusi
 *  After pairing the zwave stick and zwave node device, plug zwave stick into the usb port of host. This step enable zwave stick to create a zwave mesh network;
 *  Run `sudo bash find_port.sh` to find the file path of zwave stick, which is normally in the format of `/dev/ttyACM<x>;`;
 *  Modify the value of `device` in `/Connectors/config/zwave.json` according to the value found in previous step;
-*  Run `sudo python check_match.py` to make sure the zwave network is fully functioned;
-*  Run `sudo python sens_zwave.py [Args]` to connecting zwave devices and BuildingDepot stack;
+*  Run `sudo python check.py` to make sure the zwave network is fully functioned;
+*  Run `sudo python sens_zwave.py [Args]` to connecting zwave devices and BuildingDepot stack. If a 'dead' node is detected, this node will be ignored by connector until the node is correctly connected into network;
 
+<i>Dead Node: A node is loose connection with network intentionally or accidently, which, for instance, may be caused by accidently power outage etc.</i>
 
 
 <hr/>
