@@ -31,6 +31,26 @@ The code file in this repo includes:
 *  `find_port.sh`: run this script to check the file path of USB port of zwave hub controller (zwave stick);
 *  `zwave.json`: configuration file which need be put in `/Connectors/config/` directory;
 
+## Specifications on JSON Configuration File (`zwave.json`)
+
+* MAX_THREAD: maximum number of thread corresponding to maximum number of threads that the zwave stick allows to process.
+
+* Config: parapmeters of neach zwave node. For example, for multisensor6 configured as node 2, the following snippet indicates the parameter 111, correspoding to the time interval for sending two group of sensed data, is set to 30seconds. 
+	```
+	"2": {
+		"111": "30"
+	} 
+	```
+* check: quantities that the network will be processed. The following snippet means the network will collect Burglar alarm, ultraviolet, battery level, temperature and relative humidity from node 2. While other sensed quantities will be abandoned.
+	```
+	"check": {
+		"2": ["Burglar", 
+			  "Ultraviolet", 
+			  "Battery Level", 
+			  "Temperature", 
+			  "Relative Humidity"]
+	}
+	```
 ## Configurations
 ### Library
 The `python-openzwave` library is needed for this program, make sure to install it according to write-up available at <a href="https://github.com/OpenZWave/python-openzwave"> here; </a>
