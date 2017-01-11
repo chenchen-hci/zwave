@@ -41,16 +41,18 @@ The code file in this repo includes:
 		"111": "30"
 	} 
 	```
+
 * check: quantities that the network will be processed. The following snippet means the network will collect Burglar alarm, ultraviolet, battery level, temperature and relative humidity from node 2. While other sensed quantities will be abandoned.
 	```
 	"check": {
 		"2": ["Burglar", 
-			  "Ultraviolet", 
-			  "Battery Level", 
-			  "Temperature", 
-			  "Relative Humidity"]
+			  "Ultraviolet",  
+			  "Battery Level",  
+			  "Temperature",  
+			  "Relative Humidity"] 
 	}
 	```
+
 ## Configurations
 ### Library
 The `python-openzwave` library is needed for this program, make sure to install it according to write-up available at <a href="https://github.com/OpenZWave/python-openzwave"> here; </a>
