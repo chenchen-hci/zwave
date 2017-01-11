@@ -1,18 +1,17 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-import re
 import urllib2
 import json
 import time
 import sys
-from zwave.post_bd import get_json    # use another higher level connector
-from config.setting import Setting
 import logging
 import os
 import resource
 import openzwave
 import copy
+from zwave.post_bd import get_json    # use another higher level connector
+from config.setting import Setting
 from threading import Thread
 from openzwave.node import ZWaveNode
 from openzwave.value import ZWaveValue
