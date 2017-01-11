@@ -28,7 +28,7 @@ The code file in this repo includes:
 
 *  `sens_zwave.py`: the main device connector program [requesting];
 *  `sens_zwave_l.py`: the main device connector program [listening];
-*  `match.py`: a debugging tool used to do final check on zwave network configurations and device pairing;
+*  `check.py`: a debugging tool used to do final check on zwave network configurations and device pairing;
 *  `find_port.sh`: run this script to check the file path of USB port of zwave hub controller (zwave stick);
 *  `zwave.json`: configuration file which need be put in `/Connectors/config/` directory;
 
@@ -81,12 +81,24 @@ In specific, add ` env_keep += "PYTHONPATH" `to ` /etc/sudoers `;
 
 ## Getting Started
 
+[`sens_zwave.py`]
+
 *  After pairing the zwave stick and zwave node device, plug zwave stick into the usb port of host. This step enable zwave stick to create a zwave mesh network;
 *  Run `sudo bash find_port.sh` to find the file path of zwave stick, which is normally in the format of `/dev/ttyACM<x>;`;
 *  Modify the value of `device` in `/Connectors/config/zwave.json` according to the value found in previous step;
 *  Check the `check` item in `zwave.json` defines the correct nodes and sensor points;
 *  Run `sudo python check.py` to make sure the zwave network is fully functioned;
 *  Run `sudo python sens_zwave.py [Args]` to connecting zwave devices and BuildingDepot stack. If a 'dead' node is detected, this node will be ignored by connector until the node is correctly connected into network;
+
+[`sens_zwave_l.py`]
+
+*  After pairing the zwave stick and zwave node device, plug zwave stick into the usb port of host. This step enable zwave stick to create a zwave mesh network;
+*  Run `sudo bash find_port.sh` to find the file path of zwave stick, which is normally in the format of `/dev/ttyACM<x>;`;
+*  Modify the value of `device` in `/Connectors/config/zwave.json` according to the value found in previous step;
+*  Check the `check` item in `zwave.json` which defines the correct nodes and sensor points;
+*  Check the `config` item in `zwave.json` which defines the sampling period for each sensor node. If the sensor node is powered by battery, this value may be set slightly larger for reducing sampling frequency, which can save battery life; 
+*  Run `sudo python check.py` to make sure the zwave network is fully functioned;
+*  Run `sudo python sens_zwave_l.py -r` to connecting zwave devices and BuildingDepot stack. If a 'dead' node is detected, this node will be ignored by connector until the node is correctly connected into network;
 
 <i>
 Dead Node: A node is loose connection with network intentionally or accidently, which, for instance, may be caused by accidently power outage etc.</i>
