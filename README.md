@@ -70,7 +70,8 @@ In specific, add ` env_keep += "PYTHONPATH" `to ` /etc/sudoers `;
 
 ## Arguments
 
-For read mode [-r], 2 arguments are required, indicating the start node (inclusive) and end node(exclusive). If both arguments are -1, then all nodes in hosted network will be scanned! For another the `sens_zwave_l.py` only has on arg [-r].
+* `sens_zwave.py`: for read mode [-r], 2 arguments are required, indicating the start node (inclusive) and end node(exclusive). If both arguments are -1, then all nodes in hosted network will be scanned! 
+* `sens_zwave_l.py`: only has on arg [-r].
 
 <b>[Examples]</b><br>
 * ` sudo python sens_zwave.py -r -1 -1 ` indicates read all nodes in hosted network;
