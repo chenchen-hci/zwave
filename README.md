@@ -109,7 +109,7 @@ Dead Node: A node is loose connection with network intentionally or accidently, 
 * Humidity: %
 * Luminance: Lux
 * Ultraviolet: None Unit
-* Bulgary Alarm: None Unit
+* Bulgary Alarm: None Unit (this quantity reflects the value of motion sensor and vibration sensor)
 
 <hr/>
 <i> updated on Monday, 10 January, 2017 </i>
