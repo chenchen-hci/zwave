@@ -11,7 +11,7 @@ The device conector will do following things after being called:
 *  start network
 *  fetch data from all nodes (or some nodes defined by cmd args);
 *  publish data to buildingDepot
-*  close network
+*  close network<br>
 The drawback is that the data in two time instances may not be 'really' updated, i.e. when zwave device does not work in beaming mode, they send data in specific time interval (for saving battery life);
 
 ### Listening [`sens_zwave_l.py`]:
