@@ -8,7 +8,7 @@ import urllib2
 import json
 import time
 import sys
-from Connectors.zwave.post_bd import get_json    # use another higher level connector
+from Connectors.zwave.post_bd import get_json
 from config.setting import Setting
 import logging
 import os
@@ -22,7 +22,6 @@ from openzwave.scene import ZWaveScene
 from openzwave.controller import ZWaveController
 from openzwave.network import ZWaveNetwork
 from openzwave.option import ZWaveOption
-from louie import dispatcher, All
 import socket
 from threading import Thread
 from SocketServer import ThreadingMixIn
@@ -58,8 +57,6 @@ from SocketServer import ThreadingMixIn
 CONFIG = "zwave"         # zwave.json file
 MAX_THREAD = 1
 threads = []
-exit = False
-network = None
 
 class ZwaveNetwork:
 	def __init__(self):
@@ -231,16 +228,22 @@ class ZwaveSensor:
 			data["sensor_data"].update(sdata)
 			# post data
 			print(data)
-			return get_json(json.dumps(data))   # return a string
-		return "value abandoned!"
+			return str(get_json(json.dumps(data)))   # return a string
+		return ""
 
 	def snes_all_nodes(self):
+		msg = ""
 		for node_id in self.network.nodes:
-			self.sens_one_node(node_id)
+			if not self.sens_one_node(node_id).isspace():
+				msg = msg + self.sens_one_node(node_id) + "\n"
+		return msg
 
 	def sens_one_node(self, node_id):
+		msg = ""
 		for val_id in self.network.nodes[node_id].values:
-			self.read_sensor_value(node_id, val_id)
+			if not self.read_sensor_value(node_id, val_id).isspace():
+				msg = msg + self.read_sensor_value(node_id, val_id) + "\n"
+		return msg
 
 class ZwaveActuator:
 	def __init__(self, network):
@@ -250,16 +253,21 @@ class ZwaveActuator:
 		for val in self.network.nodes[node_id].get_switches():
 			if self.network.nodes[node_id].values[val].label == label:
 				return val
-		print("WARN: Cannot find target switch")
 		return -1
 
 	def on(self, node_id, label):
 		val = self.search_switch(node_id, label)
-		return self.network.nodes[node_id].set_switch(val,True)
+		if self.network.nodes[node_id].set_switch(val,True):
+			return "on/off : success\n"
+		else:
+			return "Device Not Found/Error in fetching data\n"
 
 	def off(self, node_id, label):
 		val = self.search_switch(node_id, label)
-		return self.network.nodes[node_id].set_switch(val,False)
+		if self.network.nodes[node_id].set_switch(val,False):
+			return "on/off : success\n"
+		else:
+			return "Device Not Found/Error in fetching data\n"
 
 	def toggle(self, node_id, label):
 		if self.status(node_id, label):
@@ -272,75 +280,73 @@ class ZwaveActuator:
 		return self.network.nodes[node_id].get_switch_state(val) 
 
 class ClientThread(Thread):
-    def __init__(self, ip, port, conn, sock):
+    def __init__(self, ip, port, conn, sock, network):
         Thread.__init__(self)
         self.ip = ip
         self.port = port
         self.conn = conn
         self.sock = sock
- 
+        self.network = network
+ 	
     def run(self):
-    	global network
-    	global exit
-        cmds = str(self.conn.recv(2048)).strip().split()
+        cmds = str(self.conn.recv(1024)).strip().split()
         print(cmds)
+        msg = ""
         try:
         	node_id = int(cmds[1])
-        	if cmds[0] == "-r":
-        		sensor = ZwaveSensor(network.network)
-        		if node_id == -1:
-        			sensor.snes_all_nodes()
-        		elif node_id > 1:
-        			sensor.sens_one_node(node_id)
-        		else:
-        			print("Bad Arguments")
-        	elif cmds[0] == "-w":
-        		assert (node_id > 1), "Node ID cannot smaller than 1!"
-        		actuator = ZwaveActuator(network.network)
-        		if actuator.search_switch(node_id, cmds[2]) is not -1:
-        			if cmds[3] == "on":
-        				actuator.on(node_id, cmds[2])
-        			elif cmds[3] == "off":
-        				actuator.off(node_id, cmds[2])
-        			elif cmds[3] == "toggle":
-        				actuator.toggle(node_id, cmds[2])
-        			else:
-        				print("Bad switch command")
-        		else:
-        			print("switch cannot be found!")
-        	else:
-        		print("Bad Arguments")
+        	if cmds[0] == "r":
+				sensor = ZwaveSensor(self.network)
+				if node_id == -1:
+					msg = msg + sensor.snes_all_nodes()
+				elif node_id > 1:
+					msg = msg + sensor.sens_one_node(node_id)
+        	elif cmds[0] == "w":
+				actuator = ZwaveActuator(self.network)
+				if node_id > 1 and actuator.search_switch(node_id, cmds[2]) is not -1:
+					if cmds[3] == "on":
+						msg = msg + actuator.on(node_id, cmds[2])
+					elif cmds[3] == "off":
+						msg = msg + actuator.off(node_id, cmds[2])
+					elif cmds[3] == "toggle":
+						msg = msg + actuator.toggle(node_id, cmds[2])
+					else:
+						msg = msg + "Switch Command Not Found\n"
+				else:
+					msg = msg + "Device Not Found\n"
         except Exception as e:
-        	print("Current thread abort!" + str(e))
+        	print(str(e))	
+        	msg += "Bad Arguments"
         finally:
+        	self.conn.send(msg)
         	self.conn.close()
 
 def get_socket():
-	s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)         # Create a socket object
-	host = socket.gethostname() # Get local machine name
-	port = 12345                # Reserve a port for your service.
-	s.bind((host, port))        # Bind to the port
-	s.listen(5)                 # Now wait for client connection.
-	return s
+	try:
+		s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)         # Create a socket object
+		host = socket.gethostname()                      # Get local machine name
+		port = int(Setting(CONFIG).setting["port"])     # Reserve a port for your service.
+		s.bind((host, port))        # Bind to the port
+		s.listen(5)                 # Now wait for client connection.
+		return s
+	except Exception as e:
+		sys.exit("Socket Creation Failed\n" + str(e))
 
 def main():
 	"""
 	"""	
 	global threads
-	global exit
-	global network
 	network = ZwaveNetwork()
 	network.network_init()
 	network.config_all_nodes()
 	network.network_awake()
 
 	sock = get_socket()
-	while not exit:
+	while True:
 		(conn, (ip, port)) = sock.accept()
 		if len(threads) > MAX_THREAD:
 			conn.close()
 		else:
-			newthread = ClientThread(ip, port, conn, sock)
+			newthread = ClientThread(ip, port, conn, sock, network.network)
     		newthread.start()
     		threads.append(newthread)
     # wait until all threads is done
