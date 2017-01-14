@@ -8,7 +8,7 @@ import urllib2
 import json
 import time
 import sys
-from zwave.post_bd import get_json    # use another higher level connector
+from Connectors.zwave.post_bd import get_json    # use another higher level connector
 from config.setting import Setting
 import logging
 import os
@@ -23,6 +23,10 @@ from openzwave.controller import ZWaveController
 from openzwave.network import ZWaveNetwork
 from openzwave.option import ZWaveOption
 from louie import dispatcher, All
+import socket
+from threading import Thread
+from SocketServer import ThreadingMixIn
+
 
 """
 	About:
@@ -53,8 +57,9 @@ from louie import dispatcher, All
 
 CONFIG = "zwave"         # zwave.json file
 MAX_THREAD = 1
-thread_counter = 1
-check = {}               # define the item to be listened
+threads = []
+exit = False
+network = None
 
 class ZwaveNetwork:
 	def __init__(self):
@@ -62,7 +67,6 @@ class ZwaveNetwork:
 			Initialize using zwave.json config file defined in CONFIG variable
 		"""
 		# check will not be changed once it is initialized
-		global check
 		global MAX_THREAD
 		multisensor_cred = Setting(CONFIG)
 		self.device = str(multisensor_cred.setting["device"])
@@ -71,19 +75,6 @@ class ZwaveNetwork:
 		self.write_file = bool(multisensor_cred.setting["write_log_file"])
 		self.output_console = bool(multisensor_cred.setting["write_console"])
 
-		self.config = {}
-		# format config dict
-		for config_k, config_v in multisensor_cred.setting["config"].items():
-			item = {}
-			for k, v in config_v.iteritems():
-				item[int(k)] = int(v)	
-			self.config[int(config_k)] = item
-		# format check item
-		for k, v in multisensor_cred.setting["check"].items():
-			item = []
-			for node in v:
-				item.append(str(node))
-			check[int(k)] = item 
 		MAX_THREAD = int(multisensor_cred.setting["MAX_THREAD"])
 
 	def network_init(self):
@@ -162,7 +153,7 @@ class ZwaveNetwork:
 			Args: None
 			Return: None
 		"""
-		for ndoe_id in self.network.nodes:
+		for node_id in self.network.nodes:
 			config_node(node_id)
 
 	def network_stop(self):
@@ -172,7 +163,8 @@ class ZwaveNetwork:
 		self.network.stop()
 		print("INFO: Network stopped")
 
-	def check_node_connection(self, node_id):
+	@staticmethod
+	def check_node_connection(network, node_id):
 		""" 
 			This function aims to check whether the node (specified by node_id) is connected in network. If not, the value, which is old historical data, will be abandoned.
 
@@ -181,24 +173,30 @@ class ZwaveNetwork:
 
 			Note: this function is used for debugging purpose
 		"""
-		if self.network.manager.isNodeFailed(self.network.home_id, node_id):
+		if network.manager.isNodeFailed(network.home_id, node_id):
 			print("WARN: Node [{}] is failed!" .format(node_id))
 			return False
 		return True
 
-	def check_all_nodes_connection(self):
-		""" 
-			This function aims to check whether ALL nodes is connected in network. If any 'dead' node is detected, the function will return false.
 
-			Args: None
-			Return: ture if all node is still connected in the network, or otherwise
-
-			Note: this function is used for debugging purpose
-		"""
-		for node in self.network.nodes:
-			if not self.check_node_connection(node):
-				return False
-		return True
+class ZwaveSensor:
+	def __init__(self, network):
+		multisensor_cred = Setting(CONFIG)
+		self.network = network   # nethwork instance
+		self.config = {}
+		self.check = {}
+		# format config dict
+		for config_k, config_v in multisensor_cred.setting["config"].items():
+			item = {}
+			for k, v in config_v.iteritems():
+				item[int(k)] = int(v)	
+			self.config[int(config_k)] = item
+		# format check item
+		for k, v in multisensor_cred.setting["check"].items():
+			item = []
+			for node in v:
+				item.append(str(node))
+			self.check[int(k)] = item 
 
 	@staticmethod
 	def get_mac_id(node):
@@ -213,80 +211,147 @@ class ZwaveNetwork:
 			node.product_id[2:]
 		return ':'.join(mac_str[i:i+2] for i in range(0, len(mac_str), 2))
 
-def thread_post_bd(data):
-	"""
-		a thread routine to post the passed in data to building depot
-	
-		Args: snesed data:
-			sensor_data: {
-				mac_id: <node id (48bits)>,
-				<All other sensor data>
-			}
-	"""
-	global thread_counter
-	print(data)
-	print(get_json(json.dumps(data)))   # has some issues here!
-	thread_counter -= 1
+	def read_sensor_value(self, node_id, value_id):
+		# get sensor value
+		node = self.network.nodes[node_id]
+		value = node.values[value_id]
+		if node_id in self.check and \
+			 value.label in self.check[node_id] and\
+			 ZwaveNetwork.check_node_connection(self.network, node_id):
+			value.refresh()
+			sdata = {}
+			sdata["mac_id"] = ZwaveSensor.get_mac_id(node)
+			sdata["quantity"] = value.label
+			sdata["units"] = value.units
+			sdata[value.label] = value.data_as_string
+			# get sensor data
+			sdata[value.label] = node.get_sensor_value(value_id)
+			# assemble data
+			data = {"sensor_data":{}}
+			data["sensor_data"].update(sdata)
+			# post data
+			print(data)
+			return get_json(json.dumps(data))   # return a string
+		return "value abandoned!"
 
-def louie_network_ready():
-	"""
-		initial signal handler
-	"""
-	dispatcher.connect(louie_value_update, ZWaveNetwork.SIGNAL_VALUE)
+	def snes_all_nodes(self):
+		for node_id in self.network.nodes:
+			self.sens_one_node(node_id)
 
-def louie_value_update(network, node, value):
-	"""
-		signal handler when value is received
-	"""
-	global MAX_THREAD
-	global thread_counter
-	if node.node_id in check \
-		and value.label in check[node.node_id] \
-		and thread_counter < MAX_THREAD:
-		data = {"sensor_data":{}}
-		sdata = {}
-		sdata["mac_id"] = ZwaveNetwork.get_mac_id(node)
-		sdata["quantity"] = value.label
-		sdata["units"] = value.units
-		sdata[value.label] = value.data_as_string
-		data["sensor_data"].update(sdata)
-		thread_counter += 1
-		Thread(target=thread_post_bd, args=(copy.deepcopy(data),)).start()
+	def sens_one_node(self, node_id):
+		for val_id in self.network.nodes[node_id].values:
+			self.read_sensor_value(node_id, val_id)
 
-def main(cmd):
-	"""
-		Accept command to either read or actuate (not implemented) the nodes in zwave network.
+class ZwaveActuator:
+	def __init__(self, network):
+		self.network = network
 
-		Args:
-			[-r/w]: -r indicates read from all sensors, while -w indicates write to sensor;
-	
-		Returns:
-			1. If the args is to read
-				{
-					"success": "True" 
-					"HTTP Error 400": "Bad Request"
-				} 
+	def search_switch(self, node_id, label):   # make sure the switch exit!!
+		for val in self.network.nodes[node_id].get_switches():
+			if self.network.nodes[node_id].values[val].label == label:
+				return val
+		print("WARN: Cannot find target switch")
+		return -1
+
+	def on(self, node_id, label):
+		val = self.search_switch(node_id, label)
+		return self.network.nodes[node_id].set_switch(val,True)
+
+	def off(self, node_id, label):
+		val = self.search_switch(node_id, label)
+		return self.network.nodes[node_id].set_switch(val,False)
+
+	def toggle(self, node_id, label):
+		if self.status(node_id, label):
+			return self.off(node_id,label)
+		else:
+			return self.on(node_id, label)
+
+	def status(self, node_id, label):
+		val = self.search_switch(node_id, label)
+		return self.network.nodes[node_id].get_switch_state(val) 
+
+class ClientThread(Thread):
+    def __init__(self, ip, port, conn, sock):
+        Thread.__init__(self)
+        self.ip = ip
+        self.port = port
+        self.conn = conn
+        self.sock = sock
+ 
+    def run(self):
+    	global network
+    	global exit
+        cmds = str(self.conn.recv(2048)).strip().split()
+        print(cmds)
+        try:
+        	node_id = int(cmds[1])
+        	if cmds[0] == "-r":
+        		sensor = ZwaveSensor(network.network)
+        		if node_id == -1:
+        			sensor.snes_all_nodes()
+        		elif node_id > 1:
+        			sensor.sens_one_node(node_id)
+        		else:
+        			print("Bad Arguments")
+        	elif cmds[0] == "-w":
+        		assert (node_id > 1), "Node ID cannot smaller than 1!"
+        		actuator = ZwaveActuator(network.network)
+        		if actuator.search_switch(node_id, cmds[2]) is not -1:
+        			if cmds[3] == "on":
+        				actuator.on(node_id, cmds[2])
+        			elif cmds[3] == "off":
+        				actuator.off(node_id, cmds[2])
+        			elif cmds[3] == "toggle":
+        				actuator.toggle(node_id, cmds[2])
+        			else:
+        				print("Bad switch command")
+        		else:
+        			print("switch cannot be found!")
+        	else:
+        		print("Bad Arguments")
+        except Exception as e:
+        	print("Current thread abort!" + str(e))
+        finally:
+        	self.conn.close()
+
+def get_socket():
+	s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)         # Create a socket object
+	host = socket.gethostname() # Get local machine name
+	port = 12345                # Reserve a port for your service.
+	s.bind((host, port))        # Bind to the port
+	s.listen(5)                 # Now wait for client connection.
+	return s
+
+def main():
+	"""
 	"""	
-	if cmd == '-r':
-		# parse input args
-		network = ZwaveNetwork()
-		network.network_init()
-		network.config_all_nodes()
-		dispatcher.connect(louie_network_ready, ZWaveNetwork.SIGNAL_NETWORK_READY)
-		network.network_awake()
+	global threads
+	global exit
+	global network
+	network = ZwaveNetwork()
+	network.network_init()
+	network.config_all_nodes()
+	network.network_awake()
 
-		while True:
-			time.sleep(1000)
-
-		network.network_stop()
-	else:
-		sys.exit("Not implemented")
+	sock = get_socket()
+	while not exit:
+		(conn, (ip, port)) = sock.accept()
+		if len(threads) > MAX_THREAD:
+			conn.close()
+		else:
+			newthread = ClientThread(ip, port, conn, sock)
+    		newthread.start()
+    		threads.append(newthread)
+    # wait until all threads is done
+	for th in threads:
+		th.join()
+    # stop zwave network
+	sock.close()
+	network.network_stop()
 
 if __name__ == "__main__":
-	if len(sys.argv) < 2:
-		sys.exit("Bad number of arguments!")
-	else:
-		main(sys.argv[1])
+	main()
 
 
 
