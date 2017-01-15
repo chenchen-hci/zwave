@@ -4,6 +4,8 @@
 import socket               # Import socket module
 import sys
 import time
+import string
+import random
 from config.setting import Setting
 
 CONFIG = "zwave"         # zwave.json file
@@ -18,7 +20,7 @@ def get_socket():
 	except Exception as e:
 		sys.exit("Socket Creation Failed\n" + str(e))
 
-def recv_timeout(the_socket, timeout = 3):
+def recv_timeout(the_socket, timeout = 2):
     #make socket non blocking
     the_socket.setblocking(0)
     #total data partwise in an array
@@ -34,7 +36,7 @@ def recv_timeout(the_socket, timeout = 3):
         #if you got no data at all, wait a little longer, twice the timeout
         elif time.time()-begin > timeout:
             break
-         
+        
         #recv something
         try:
             data = the_socket.recv(1024)
@@ -53,7 +55,7 @@ def main(arguments):
 	s = get_socket()
 	cmd = ""
 	for arg in arguments[1:]:
-		cmd = cmd + arg + " "	
+		cmd = cmd + arg + " "
 	s.send(cmd)
 	print(recv_timeout(s))
 	s.close()                     # Close the socket when done

@@ -26,7 +26,6 @@ import socket
 from threading import Thread
 from SocketServer import ThreadingMixIn
 
-
 """
 	About:
 	Device Connector - Zwave Product [listening]
@@ -71,7 +70,15 @@ class ZwaveNetwork:
 		self.log_file = str(multisensor_cred.setting["log_file"])
 		self.write_file = bool(multisensor_cred.setting["write_log_file"])
 		self.output_console = bool(multisensor_cred.setting["write_console"])
+		# format config dict
+		self.config = {}
+		for config_k, config_v in multisensor_cred.setting["config"].items():
+			item = {}
+			for k, v in config_v.iteritems():
+				item[int(k)] = int(v)	
+			self.config[int(config_k)] = item
 
+		self.mapping  = {int(k): str(v) for k, v in multisensor_cred.setting["mapping"].iteritems()}
 		MAX_THREAD = int(multisensor_cred.setting["MAX_THREAD"])
 
 	def network_init(self):
@@ -105,7 +112,7 @@ class ZwaveNetwork:
 		"""
 			Awake zwave network.
 			Terminated program if awake failed! """
-		print("INFO: Waiting for network awaked : ")
+		print("INFO: Waiting for network awaked :")
 
 		for i in range(0,300):
 			if self.network.state >= self.network.STATE_AWAKED:
@@ -139,9 +146,8 @@ class ZwaveNetwork:
 			Return: None
 		"""
 		if node_id in self.config:
-			for k, v in self.config[node_id]:
-				print("key = " + str(k) + " value = " + str(v))
-				self.networks.nodes[node_id].set_config_param(k, v)
+			for k, v in self.config[node_id].iteritems():
+				self.network.nodes[node_id].set_config_param(k, v)
 
 	def config_all_nodes(self):
 		"""
@@ -151,7 +157,12 @@ class ZwaveNetwork:
 			Return: None
 		"""
 		for node_id in self.network.nodes:
-			config_node(node_id)
+			self.config_node(node_id)
+			self.update_node_name(node_id)
+
+	def update_node_name(self, node_id):
+		if node_id in self.mapping:
+			self.network.nodes[node_id].name = self.mapping[node_id]
 
 	def network_stop(self):
 		"""
@@ -171,29 +182,21 @@ class ZwaveNetwork:
 			Note: this function is used for debugging purpose
 		"""
 		if network.manager.isNodeFailed(network.home_id, node_id):
-			print("WARN: Node [{}] is failed!" .format(node_id))
 			return False
 		return True
-
 
 class ZwaveSensor:
 	def __init__(self, network):
 		multisensor_cred = Setting(CONFIG)
 		self.network = network   # nethwork instance
-		self.config = {}
-		self.check = {}
-		# format config dict
-		for config_k, config_v in multisensor_cred.setting["config"].items():
-			item = {}
-			for k, v in config_v.iteritems():
-				item[int(k)] = int(v)	
-			self.config[int(config_k)] = item
+
+		self.listen = {}
 		# format check item
-		for k, v in multisensor_cred.setting["check"].items():
+		for k, v in multisensor_cred.setting["listen"].items():
 			item = []
 			for node in v:
 				item.append(str(node))
-			self.check[int(k)] = item 
+			self.listen[int(k)] = item 
 
 	@staticmethod
 	def get_mac_id(node):
@@ -212,15 +215,20 @@ class ZwaveSensor:
 		# get sensor value
 		node = self.network.nodes[node_id]
 		value = node.values[value_id]
-		if node_id in self.check and \
-			 value.label in self.check[node_id] and\
+		if node_id in self.listen and \
+			 value.label in self.listen[node_id] and\
 			 ZwaveNetwork.check_node_connection(self.network, node_id):
 			value.refresh()
 			sdata = {}
+			sdata["node_name"] = self.network.nodes[node_id].name
+			sdata["home_id"] = str(self.network.home_id)
+			sdata["node_id"] = str(node_id)
 			sdata["mac_id"] = ZwaveSensor.get_mac_id(node)
 			sdata["quantity"] = value.label
 			sdata["units"] = value.units
-			sdata[value.label] = value.data_as_string
+			sdata["identifier"] = sdata["home_id"] + ":" + sdata["node_id"] + \
+									"[" + sdata["node_name"] + "]:" + \
+									sdata["quantity"]			
 			# get sensor data
 			sdata[value.label] = node.get_sensor_value(value_id)
 			# assemble data
@@ -234,15 +242,17 @@ class ZwaveSensor:
 	def snes_all_nodes(self):
 		msg = ""
 		for node_id in self.network.nodes:
-			if not self.sens_one_node(node_id).isspace():
-				msg = msg + self.sens_one_node(node_id) + "\n"
+			tmp = self.sens_one_node(node_id)
+			if not tmp.isspace():
+				msg = msg + tmp + "\n"
 		return msg
 
 	def sens_one_node(self, node_id):
 		msg = ""
 		for val_id in self.network.nodes[node_id].values:
-			if not self.read_sensor_value(node_id, val_id).isspace():
-				msg = msg + self.read_sensor_value(node_id, val_id) + "\n"
+			tmp = self.read_sensor_value(node_id, val_id)
+			if not tmp.isspace():
+				msg = msg + tmp + "\n"
 		return msg
 
 class ZwaveActuator:
@@ -289,7 +299,7 @@ class ClientThread(Thread):
         self.network = network
  	
     def run(self):
-        cmds = str(self.conn.recv(1024)).strip().split()
+        cmds = str(self.conn.recv(2048)).strip().split()
         print(cmds)
         msg = ""
         try:
@@ -314,7 +324,7 @@ class ClientThread(Thread):
 				else:
 					msg = msg + "Device Not Found\n"
         except Exception as e:
-        	print(str(e))	
+        	print(e)
         	msg += "Bad Arguments"
         finally:
         	self.conn.send(msg)
@@ -323,7 +333,7 @@ class ClientThread(Thread):
 def get_socket():
 	try:
 		s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)         # Create a socket object
-		host = socket.gethostname()                      # Get local machine name
+		host = socket.gethostbyname(socket.gethostname())  # restrict to listen localhost only                      # Get local machine name
 		port = int(Setting(CONFIG).setting["port"])     # Reserve a port for your service.
 		s.bind((host, port))        # Bind to the port
 		s.listen(5)                 # Now wait for client connection.
@@ -337,8 +347,8 @@ def main():
 	global threads
 	network = ZwaveNetwork()
 	network.network_init()
-	network.config_all_nodes()
 	network.network_awake()
+	network.config_all_nodes()
 
 	sock = get_socket()
 	while True:
