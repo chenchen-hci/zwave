@@ -25,7 +25,7 @@ from openzwave.option import ZWaveOption
 import socket
 from threading import Thread
 from SocketServer import ThreadingMixIn
-
+import threading
 """
 	About:
 	Device Connector - Zwave Product [listening]
@@ -188,7 +188,7 @@ class ZwaveNetwork:
 class ZwaveSensor:
 	def __init__(self, network):
 		multisensor_cred = Setting(CONFIG)
-		self.network = network   # nethwork instance
+		self.network = network.network   # nethwork instance
 
 		self.listen = {}
 		# format check item
@@ -257,7 +257,7 @@ class ZwaveSensor:
 
 class ZwaveActuator:
 	def __init__(self, network):
-		self.network = network
+		self.network = network.network
 
 	def search_switch(self, node_id, label):   # make sure the switch exit!!
 		for val in self.network.nodes[node_id].get_switches():
@@ -290,27 +290,30 @@ class ZwaveActuator:
 		return self.network.nodes[node_id].get_switch_state(val) 
 
 class ClientThread(Thread):
-    def __init__(self, ip, port, conn, sock, network):
-        Thread.__init__(self)
-        self.ip = ip
-        self.port = port
-        self.conn = conn
-        self.sock = sock
-        self.network = network
+	def __init__(self, ip, port, conn, sock, network):
+		Thread.__init__(self)
+		self.ip = ip
+		self.port = port
+		self.conn = conn
+		self.sock = sock
+		self.network = network
  	
-    def run(self):
-        cmds = str(self.conn.recv(2048)).strip().split()
-        print(cmds)
-        msg = ""
-        try:
-        	node_id = int(cmds[1])
-        	if cmds[0] == "r":
+	def run(self):
+		global threads
+		exit = False
+		cmds = str(self.conn.recv(2048)).strip().split()
+		print(cmds)
+		msg = ""
+		try:
+			if cmds[0] == "r":
+				node_id = int(cmds[1])
 				sensor = ZwaveSensor(self.network)
 				if node_id == -1:
 					msg = msg + sensor.snes_all_nodes()
 				elif node_id > 1:
 					msg = msg + sensor.sens_one_node(node_id)
-        	elif cmds[0] == "w":
+			elif cmds[0] == "w":
+				node_id = int(cmds[1])
 				actuator = ZwaveActuator(self.network)
 				if node_id > 1 and actuator.search_switch(node_id, cmds[2]) is not -1:
 					if cmds[3] == "on":
@@ -323,14 +326,24 @@ class ClientThread(Thread):
 						msg = msg + "Switch Command Not Found\n"
 				else:
 					msg = msg + "Device Not Found\n"
-        except Exception as e:
-        	print(e)
-        	msg += "Bad Arguments"
-        finally:
-        	self.conn.send(msg)
-        	self.conn.close()
+			elif cmds[0] == "q":
+				MAX_THREAD = 0  # dosen't allow any more thread to come 
+				msg = "Bye"
+				exit = True
+		except Exception as e:
+			msg += "Bad Arguments"
+		finally:
+			self.conn.send(msg)
+			self.conn.close()
+			if exit:
+				for th in threads:
+					if th != threading.current_thread():
+						th.join()
+				self.sock.shutdown(socket.SHUT_RDWR)
+			if threading.current_thread() in threads:
+				threads.remove(threading.current_thread())
 
-def get_socket():
+def socket_init():
 	try:
 		s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)         # Create a socket object
 		host = socket.gethostbyname(socket.gethostname())  # restrict to listen localhost only                      # Get local machine name
@@ -350,21 +363,22 @@ def main():
 	network.network_awake()
 	network.config_all_nodes()
 
-	sock = get_socket()
-	while True:
-		(conn, (ip, port)) = sock.accept()
-		if len(threads) > MAX_THREAD:
-			conn.close()
-		else:
-			newthread = ClientThread(ip, port, conn, sock, network.network)
-    		newthread.start()
-    		threads.append(newthread)
-    # wait until all threads is done
-	for th in threads:
-		th.join()
-    # stop zwave network
-	sock.close()
-	network.network_stop()
+	sock = socket_init()
+
+	try:
+		while True:
+			(conn, (ip, port)) = sock.accept()
+			if len(threads) > MAX_THREAD:
+				conn.close()
+			else:
+				newthread = ClientThread(ip, port, conn, sock, network)
+    			newthread.start()
+    			threads.append(newthread)
+	except Exception as e:
+		print("Socket Closed, Program Exited")
+		sock.close()  # clean up all  other thread
+		network.network_stop()
+		sys.exit("Bye")
 
 if __name__ == "__main__":
 	main()
