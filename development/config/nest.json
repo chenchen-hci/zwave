@@ -1,0 +1,12 @@
+{
+  "credentials": {
+    "PIN": "NBCFUAG4",
+    "Product_id": "89d2d205-3297-419f-9405-9115c33e7881",
+    "Product_secret": "01XrOHyiXTLzgCX0e5VTcebGe",
+    "access_token": "c.Msbr1TYGaNit1p6qPdklCuAH4usOM64JWH8hgKrEIByEdOzpDyesA5JiEU12m4NmGSaJ0IOldRzcY6qdOieCX54bC51tqAcFGaSCQiPgLdbvudy5WvAjjSd01u4QKP5nUeJY0gbhbatD4og6"
+  },
+  "url": {
+    "_AUTH_REQ": "https://api.home.nest.com/oauth2/access_token",
+    "_DEVICELIST_REQ": "https://developer-api.nest.com/devices?auth="
+  }
+}

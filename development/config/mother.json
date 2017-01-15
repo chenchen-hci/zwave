@@ -1,0 +1,12 @@
+{
+	"client_auth": {
+		"_USERNAME": "sud335",
+		"_PASSWORD": "469321#"
+	},
+	"url": {
+		"_BASE_URL": "https://sen.se/api/v2/",
+		"_AUTH_REQ": "https://sen.se/api/v2/user/api_key/",
+		"_NODE_REQ": "https://sen.se/api/v2/nodes/"
+	},
+	"mac_id":"00:04:A3:FF:BA:C0"
+}
