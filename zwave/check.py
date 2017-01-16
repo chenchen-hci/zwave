@@ -5,7 +5,9 @@ import logging
 import os
 import resource
 import openzwave
-from Connectors.zwave.sens_zwave import ZwaveNetwork
+import sys
+import time
+from config.setting import Setting
 from openzwave.node import ZWaveNode
 from openzwave.value import ZWaveValue
 from openzwave.scene import ZWaveScene
@@ -14,132 +16,210 @@ from openzwave.network import ZWaveNetwork
 from openzwave.option import ZWaveOption
 
 """
-	About:
+    About:
 
-	This module is part of debugging tool for zwave network device connector.
+    This module is part of debugging tool for zwave network device connector.
 
-	The medodule is used to check whether hub and network devices are paired successfully. All network and nodes meta information will be printed if network is configured successfully.
+    The medodule is used to check whether hub and network devices are paired 
+    successfully. All network and nodes meta information will be printed if 
+    network is configured successfully.
 
-	The module need be ran under super user mode:
-	sudo python check_match.py.
+    The module need be ran under super user mode:
+    sudo python check_match.py.
 
-	Credits:
+    Credits:
 
-	The print_network() and print_nodes() routine is modified based on example demo program of python-zwave library [accessed on Jan 6, 2017].
+    The print_network() and print_nodes() routine is modified based on example 
+    demo program of python-zwave library [accessed on Jan 6, 2017].
 """
 
+CONFIG = "zwave"
 SEPARATOR_LENGTH = 60
 
-def print_network(network):
-	"""
-		Print network info.
-		The module is modified based on example demo program in openzwave library.
+class ZwaveNetworkDebug:
+    """
+        Class of zwavenetwork:
+        In the context of the instance of ZwaveNetwork the instance of zwave 
+        sensor and zwave actuator is able to proceeded.
+    """
+    def __init__(self):
+        """
+            Initialize using zwave.json config file defined in CONFIG variable
+        """
+        multisensor_cred = Setting(CONFIG)
+        self.device = str(multisensor_cred.setting["device"])
+        self.log = str(multisensor_cred.setting["log"])
+        self.log_file = str(multisensor_cred.setting["log_file"])
+        self.write_file = bool(multisensor_cred.setting["write_log_file"])
+        self.output_console = bool(multisensor_cred.setting["write_console"])
+        # format config dict
 
-		Args: instance of network
-		Return: None
-	"""
-	print("Current zwave network infomation:")
-	print("-" * SEPARATOR_LENGTH)
-	print("Use openzwave library : {}".format(network.controller.ozw_library_version))
-	print("Use python library : {}".format(network.controller.python_library_version))
-	print("Use ZWave library : {}".format(network.controller.library_description))
-	print("Network home id : {}".format(network.home_id_str))
-	print("Controller node id : {}".format(network.controller.node.node_id))
-	print("Controller node version : {}".format(network.controller.node.version))
-	print("Nodes in network : {}".format(network.nodes_count))
-	print("Controller capabilities : {}".format(network.controller.capabilities))
-	print("Controller node capabilities : {}".format(network.controller.node.capabilities))
-	print("Nodes in network : {}".format(network.nodes_count))
-	print("Driver statistics : {}".format(network.controller.stats))
-	print("-" * SEPARATOR_LENGTH)
+    def network_init(self):
+        """
+            Zwave network initialization.
+            Terminate program if initialization failed.
+        """
+        logging.basicConfig(level=logging.INFO)
+        logger = logging.getLogger('openzwave')
 
-def print_nodes(network):
-	"""
-		Print ALL nodes info.
-		The module is modified based on example demo program in openzwave library.
+        # option initialization, abort if initialization failed
+        try:
+            options = ZWaveOption(self.device, \
+             config_path="../openzwave/config", \
+             user_path=".", cmd_line="")
+            options.set_log_file(self.log_file)
+            options.set_append_log_file(self.write_file)
+            options.set_console_output(self.output_console)
+            options.set_save_log_level(self.log)
+            options.set_logging(False)
+            options.lock()
+        except Exception as e:
+            print("Zwave initialization failed!")
+            print("Please check the USB port of Zwave Stick")
+            print(e)
+            sys.exit(-1)
 
-		Args: instance of network
-		Return: None
-	"""
-	print("-" * SEPARATOR_LENGTH)
-	print("Driver statistics : {}".format(network.controller.stats))
-	print("-" * SEPARATOR_LENGTH)
-	print("-" * SEPARATOR_LENGTH)
-	print("Try to autodetect nodes on the network")
-	print("-" * SEPARATOR_LENGTH)
-	print("Nodes in network : {}".format(network.nodes_count))
-	print("-" * SEPARATOR_LENGTH)
-	print("Retrieve switches on the network")
-	print("-" * SEPARATOR_LENGTH)
-	for node in network.nodes:
-		print("-" * SEPARATOR_LENGTH)
-		print("{} - Name : {}".format(network.nodes[node].node_id, network.nodes[node].name))
-		print("{} - Manufacturer name / id : {} / {}".format(network.nodes[node].node_id, network.nodes[node].manufacturer_name, network.nodes[node].manufacturer_id))
-		print("{} - Product name / id / type : {} / {} / {}".format(network.nodes[node].node_id, network.nodes[node].product_name, network.nodes[node].product_id, network.nodes[node].product_type))
-		print("{} - Version : {}".format(network.nodes[node].node_id, network.nodes[node].version))
-		print("{} - Command classes : {}".format(network.nodes[node].node_id,network.nodes[node].command_classes_as_string))
-		print("{} - Capabilities : {}".format(network.nodes[node].node_id,network.nodes[node].capabilities))
-		print("{} - Neigbors : {}".format(network.nodes[node].node_id,network.nodes[node].neighbors))
-		print("{} - Can sleep : {}".format(network.nodes[node].node_id,network.nodes[node].can_wake_up()))
-		groups = {}
-		for grp in network.nodes[node].groups:
-			groups[network.nodes[node].groups[grp].index] = {'label':network.nodes[node].groups[grp].label, 'associations':network.nodes[node].groups[grp].associations}
-		print("{} - Groups : {}".format (network.nodes[node].node_id, groups))
-		# work through each nodes
-		values = {}
-		for val in network.nodes[node].values :
-			values[network.nodes[node].values[val].object_id] = {
-				'label':network.nodes[node].values[val].label,
-				'help':network.nodes[node].values[val].help,
-				'command_class':network.nodes[node].values[val].command_class,
-				'max':network.nodes[node].values[val].max,
-				'min':network.nodes[node].values[val].min,
-				'units':network.nodes[node].values[val].units,
-				'data':network.nodes[node].values[val].data_as_string,
-				'ispolled':network.nodes[node].values[val].is_polled}
-		# walk through each command classes
-		for cmd in network.nodes[node].command_classes:
-			print("   ---------   ")
-			print("cmd = {}".format(cmd))
-			values = {}
-			for val in network.nodes[node].get_values_for_command_class(cmd) :
-				values[network.nodes[node].values[val].object_id] = {
-					'label':network.nodes[node].values[val].label,
-					'help':network.nodes[node].values[val].help,
-					'max':network.nodes[node].values[val].max,
-					'min':network.nodes[node].values[val].min,
-					'units':network.nodes[node].values[val].units,
-					'data':network.nodes[node].values[val].data,
-					'data_str':network.nodes[node].values[val].data_as_string,
-					'genre':network.nodes[node].values[val].genre,
-					'type':network.nodes[node].values[val].type,
-					'ispolled':network.nodes[node].values[val].is_polled,
-					'readonly':network.nodes[node].values[val].is_read_only,
-					'writeonly':network.nodes[node].values[val].is_write_only,
-				}
-			print("{} - Values for command class : {} : {}".format(network.nodes[node].node_id, network.nodes[node].get_command_class_as_string(cmd), values))
-			print("-" * SEPARATOR_LENGTH)
+        # create a network instance
+        self.network = ZWaveNetwork(options, log=None)
+
+    def network_awake(self):
+        """
+            Awake zwave network.
+            Terminated program if awake failed! 
+        """
+        print("INFO: Waiting for network awaked :")
+
+        for i in range(0, 300):
+            if self.network.state >= self.network.STATE_AWAKED:
+                break
+            else:
+                sys.stdout.write('.')
+                sys.stdout.flush()
+                time.sleep(1.0)
+
+        if self.network.state < self.network.STATE_AWAKED:
+            sys.exit("Network is not awake, program abort!")
+
+        for i in range(0, 300):
+            if self.network.state >= self.network.STATE_READY:
+                break
+            else:
+                sys.stdout.write(".")
+                sys.stdout.flush()
+                time.sleep(1.0)
+
+        if not self.network.is_ready:
+            sys.exit("Network is not ready, program abort!")
+        print("\nINFO: Network [{}] awaked!" .format(self.network.home_id_str))
+        print("INFO: Number of nodes: [{}]" .format(self.network.nodes_count))
+
+    def network_stop(self):
+        """
+            Stop network.
+        """
+        self.network.stop()
+        print("INFO: Network stopped")
+
+    def check_node_connection(self, node_id):
+        """ 
+            This function aims to check whether the node (specified by 
+            node_id) is connected in network. If not, the value, which is old 
+            historical data, will be abandoned.
+
+            Args: node id of specified nodes in network
+            Return: ture if node is still connected in the network, or 
+            otherwise 
+
+            Note: this function is used for debugging purpose
+        """
+        if self.network.manager.isNodeFailed(self.network.home_id, node_id):
+            return False
+        return True
+
+    def check_all_nodes_connection(self):
+        for node in self.network.nodes:
+            if not self.check_node_connection(node):
+                return False
+        return True
+
+    def print_network(self):
+        """
+            Print network info.
+            The module is modified based on example demo program in openzwave 
+            library.
+
+            Args: instance of network
+            Return: None
+        """
+        print("Network home id : {}".format(self.network.home_id_str))
+        print("Controller node id : {}" \
+            .format(self.network.controller.node.node_id))
+        print("Nodes in network : {}".format(self.network.nodes_count))
+        print("Controller capabilities : {}" \
+            .format(self.network.controller.capabilities))
+        print("Controller node capabilities : {}" \
+            .format(self.network.controller.node.capabilities))
+        print("Nodes in network : {}".format(self.network.nodes_count))
+        print("-" * SEPARATOR_LENGTH)
+
+    def print_nodes(self):
+        """
+            Print ALL nodes info.
+            The module is modified based on example demo program in openzwave 
+            library.
+
+            Args: instance of network
+            Return: None
+        """
+        for node in self.network.nodes:
+            print("-" * SEPARATOR_LENGTH)
+            print("{} - Name : {}" \
+                .format(self.network.nodes[node].node_id, \
+                    self.network.nodes[node].name))
+            print("{} - Manufacturer name / id : {} / {}" \
+                .format(self.network.nodes[node].node_id, \
+                    self.network.nodes[node].manufacturer_name, \
+                    self.network.nodes[node].manufacturer_id))
+            print("{} - Product name / id / type : {} / {} / {}" \
+                .format(self.network.nodes[node].node_id, \
+                    self.network.nodes[node].product_name, \
+                    self.network.nodes[node].product_id, \
+                    self.network.nodes[node].product_type))
+            # work through each nodes
+            for val in self.network.nodes[node].values:
+                print("{} - value id: {}" .format(node, val))
+                print("{} - value label: {}" \
+                    .format(node, self.network.nodes[node].values[val].label))
+                print("{} - value max: {}" \
+                    .format(node, self.network.nodes[node].values[val].max))
+                print("{} - value min: {}" \
+                    .format(node, self.network.nodes[node].values[val].min))
+                print("{} - units: {}" \
+                    .format(node, self.network.nodes[node].values[val].units))
+                print("-" * int(SEPARATOR_LENGTH/2))
+            print("-" * SEPARATOR_LENGTH)
 
 def main():
-	"""
-		Print all network and nodes information.
-		This function is used to final check whether the configuration of network is completed.
+    """
+        Print all network and nodes information.
+        This function is used to final check whether the configuration of 
+        network is completed.
 
-		Args: None
-		Return: None
-	"""
-	network = ZwaveNetwork()
-	network.network_init()
-	network.network_awake()
-	print("network launched successfully!")
-	print_network(network.network)
-	print_nodes(network.network)
-	# check the connection of each nodes in network
-	if not network.check_all_nodes_connection():
-		print("WARN: Dead node detected!")
-	else:
-		print("INFO: Pass node connection check!")
-	network.network_stop()
+        Args: None
+        Return: None
+    """
+    network = ZwaveNetworkDebug()
+    network.network_init()
+    network.network_awake()
+    print("INFO: Network Launched Successfully!")
+    network.print_network()
+    network.print_nodes()
+    # check the connection of each nodes in network
+    if not network.check_all_nodes_connection():
+        print("WARN: Dead node detected!")
+    else:
+        print("INFO: Pass node connection check!")
+    network.network_stop()
 
 if __name__ == "__main__":
-	main()
+    main()
