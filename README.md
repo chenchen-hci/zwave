@@ -4,9 +4,11 @@ Zwave device connector for BuildingDepotV3.6 [Done! :tada:]
 ## General Phylosophy
 The main challenge that the zwave device connector face is the slow speed for establish of zwave network. Typically the creation of zwave network will take roughly 10 ~ 20 seconds. Therefore the sampling frequency of device connector can be degenerated due to this fact. 
 
-For solving this issue, a instance of zwave network is created by `zwave_network.py` program, which is idealy a long running program and should be considered as a background engine (black box) that is not supposed to be exposed to users. Within the contextual of zwave network, various operations such as reading data from nodes and sending command to device switch can be performed using `sens_zwave.py` module, which can be cosidered as a interface for external program to communicate with zwave network. The communication between `zwave_network.py` and `sens_zwave.py` is performed via TCP/IP socket. However only localhost programs are allowed to be connected to zwave network. 
+For solving this issue, a instance of zwave network is created by `zwave_network.py` program, which is idealy a long running program and should be considered as a background engine (black box) that is not supposed to be exposed to users. Within the contextual of zwave network, various operations such as reading data from nodes and sending command to device switch can be performed using `sens_zwave.py` module, which can be cosidered as a interface for external program to communicate with zwave network. The communication between `zwave_network.py` and `sens_zwave.py` is performed via TCP/IP socket. However only localhost programs are allowed to be connected to zwave network. This sofware stack configurations can be demostrated in figure 1.
 
 In short, external programs are supposed to call `sens_zwave.py` for performing various operations, i.e. there are no need to call `zwave_network.py` directly.
+
+![configurations](/img/config.png)
 
 ## Program Usage
 Generally speaking, 5 options can be used to call `sens_zwave.py` module:
