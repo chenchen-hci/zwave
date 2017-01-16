@@ -656,13 +656,11 @@ class task_thread(threading.Thread):
     """
         Class of task thread used to process received command
     """
-    def __init__(self, ip, port, conn, sock, network):
+    def __init__(self, conn, sock, network):
         """
             Initialize task
         """
         threading.Thread.__init__(self)
-        self.ip = ip
-        self.port = port
         self.conn = conn
         self.sock = sock
         self.network = network
@@ -759,7 +757,7 @@ def main():
             if len(threads) > MAX_THREAD:
                 conn.close()
             else:
-                newthread = task_thread(ip, port, conn, sock, network)
+                newthread = task_thread(conn, sock, network)
                 newthread.start()
                 threads.append(newthread)
     except Exception as e:         # if socket is closed by quit thread
