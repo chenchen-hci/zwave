@@ -1,10 +1,10 @@
 {
 	"building": "Gates Hillman Complex",
-	"client_key": "R8AI8ggNGpRjNk1Hu17AcO9drAsxzCkWOwQQ9rrAHPLfieAZAA",
-	"client_id": "KvO8oCyk0fOPSs4CcW3RXc2RRh41mmoJoopzj31w",
+	"client_key": "<secrete>",
+	"client_id": "<secrete>",
 	"identifier": "randomsidentifier",
 	"name": "Test",
-	"email": "chenc5@andrew.cmu.edu",
+	"email": "XXX@XXX.com",
 	"name":"randomsource_name",
 	"url":"https://bd-exp.andrew.cmu.edu",
 	"oauth_port": ":81",

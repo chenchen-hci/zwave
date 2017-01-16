@@ -5,6 +5,7 @@ Zwave device connector for BuildingDepotV3.6 [Done! :tada:]
 
 *  Further generalization of `zwave_network.py`;
 *  Better formalization of returned status string when interacting with `sens_zwave.py`;
+*  Remove client id/key and email field of `config/bd_setting.json` for the purpose of security;
 
 ## Features [updated on 16 January 2017]
 
