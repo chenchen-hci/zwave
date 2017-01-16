@@ -156,7 +156,7 @@ The detail of `/config/zwave.json` file can be demostrated as follows:
 
 ## Further Suggestions on BuildingDepot Stack
 
-### Page Redirect After Delete Operation
+### Page Redirection After Delete Operation
 
 It is noticed that when perform delete operation on sensor in central service, for example in page 8, the url query string will be cleared causing web page being redirected to first page, i.e.
 ```
