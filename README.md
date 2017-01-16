@@ -141,7 +141,10 @@ The detail of `/config/zwave.json` file can be demostrated as follows:
 * units: the units of sensed data;
 * mac_id: hardware id used to identify each sensor points (used as identity);
 
+### Further Suggestions on BuildingDepot Stack
+
+
 <hr/>
-<i> Updated on Monday, 15 January, 2017 </i>
+<i> Updated on Sunday, 15 January, 2017 </i>
 
 
