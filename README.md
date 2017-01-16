@@ -143,7 +143,16 @@ The detail of `/config/zwave.json` file can be demostrated as follows:
 
 ## Further Suggestions on BuildingDepot Stack
 
+### Web Interface
 
+#### Page Redirect After Delete Operation
+
+#### Export Data in Data Service
+
+
+## References
+[1] python-openzwave library, [Online] Available at: <[https://github.com/OpenZWave/python-openzwave](https://github.com/OpenZWave/python-openzwave)> [Accessed on January 5, 2017]
+[2] T.Weng, A.Nwokafor, Y.Agarwal, "BuildingDepot 2.0: An Integrated Management System for Building Analysis and Control", Buildsys' 13, November 2013.
 
 <hr/>
 <i> Updated on Sunday, 15 January, 2017 </i>
