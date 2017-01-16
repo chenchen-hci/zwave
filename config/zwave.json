@@ -1,35 +1,35 @@
 {
-	"device": "/dev/ttyACM0",
-	"log": "None",
-	"log_file": "OZW_Log.log",
-	"write_log_file": "False",
-	"write_console": "False",
-	"port": "12345",
-	"MAX_THREAD": "512",
-	"mapping": {
-		"1": "Driver",
-		"2": "AeoTec Multisensor6",
-		"3": "Zooc Plug Switch"
-	},
-	"config": {
-		"2": {
-			"111": "30",
-			"3": "15",
-			"4": "5"
-		},
-		"3": {
-			"2": "20"
-		}
-	},
-	"listen": {
-		"2": ["Burglar", 
-			  "Ultraviolet", 
-			  "Battery Level", 
-			  "Temperature", 
-			  "Relative Humidity"],
-		"3": ["Energy",
-			  "Power",
-			  "Voltage",
-			  "Current"]
-	}
+    "device": "/dev/ttyACM0",
+    "log": "None",
+    "log_file": "OZW_Log.log",
+    "write_log_file": "False",
+    "write_console": "False",
+    "port": "12345",
+    "MAX_THREAD": "512",
+    "mapping": {
+        "1": "Driver",
+        "2": "AeoTec Multisensor6",
+        "3": "Zooc Plug Switch"
+    },
+    "config": {
+        "2": {
+            "111": "30",
+            "3": "15",
+            "4": "5"
+        },
+        "3": {
+            "2": "20"
+        }
+    },
+    "listen": {
+        "2": ["Burglar", 
+              "Ultraviolet", 
+              "Battery Level", 
+              "Temperature", 
+              "Relative Humidity"],
+        "3": ["Energy",
+              "Power",
+              "Voltage",
+              "Current"]
+    }
 }
