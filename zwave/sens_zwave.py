@@ -132,7 +132,7 @@ def main(arguments):
     for arg in arguments[1:]:
         cmd = cmd + arg + " "
     s.send(cmd)
-    print(recv_timeout(s))        # print response
+    print(recv_timeout(s).replace("\n", ""))        # print response
     s.close()                     # close the socket when done
 
 if __name__ == "__main__":

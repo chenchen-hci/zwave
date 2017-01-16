@@ -255,6 +255,214 @@ class ZwaveSensor:
             node.product_id[2:]
         return ':'.join(mac_str[i:i+2] for i in range(0, len(mac_str), 2))
 
+    def read_power_level(self, node_id, value_id):
+        """
+            Read one power level value from a specified node, after which the 
+            data will be posted to BuildingDepot using RESTful api.
+
+            Note: The sensor points will be skipped once the value is not 
+            specified in zwave.json (listen item) or the node is not connected 
+            property.
+
+            Args:
+                node_id: the id of sepcified node
+                value_id: the id of value (sensor point) on the specified node
+            Return:
+                status string indicates the sensing and posting process
+        """
+        node = self.network.nodes[node_id]
+        value = node.values[value_id]
+        if node_id in self.listen and \
+             value.label in self.listen[node_id] and\
+             ZwaveNetwork.check_node_connection(self.network, node_id) and\
+             value_id in node.get_power_levels():
+            value.refresh()
+            sdata = {}
+            sdata["node_name"] = self.network.nodes[node_id].name
+            sdata["home_id"] = str(self.network.home_id)
+            sdata["node_id"] = str(node_id)
+            sdata["mac_id"] = ZwaveSensor.get_mac_id(node)
+            sdata["quantity"] = value.label
+            sdata["units"] = ""
+            sdata["identifier"] = sdata["home_id"] + ":" + sdata["node_id"] + \
+                                    "[" + sdata["node_name"] + "]:" + \
+                                    sdata["quantity"]           
+            # get sensor data
+            sdata[value.label] = node.get_power_level(value_id)
+            # assemble data
+            data = {"sensor_data":{}}
+            data["sensor_data"].update(sdata)
+            # post data
+            print(data)
+            return str(get_json(json.dumps(data)))   # return a string
+        return ""    	   	    	
+
+    def read_rgbbulbs_value(self, node_id, value_id):
+        """
+            Read one rgb bulbs level value from a specified node, after which the data will be posted to BuildingDepot using RESTful api.
+
+            Note: The sensor points will be skipped once the value is not 
+            specified in zwave.json (listen item) or the node is not connected 
+            property.
+
+            Args:
+                node_id: the id of sepcified node
+                value_id: the id of value (sensor point) on the specified node
+            Return:
+                status string indicates the sensing and posting process
+        """
+        node = self.network.nodes[node_id]
+        value = node.values[value_id]
+        if node_id in self.listen and \
+             value.label in self.listen[node_id] and\
+             ZwaveNetwork.check_node_connection(self.network, node_id) and\
+             value_id in node.get_rgbbulbs():
+            value.refresh()
+            sdata = {}
+            sdata["node_name"] = self.network.nodes[node_id].name
+            sdata["home_id"] = str(self.network.home_id)
+            sdata["node_id"] = str(node_id)
+            sdata["mac_id"] = ZwaveSensor.get_mac_id(node)
+            sdata["quantity"] = value.label
+            sdata["units"] = "%"
+            sdata["identifier"] = sdata["home_id"] + ":" + sdata["node_id"] + \
+                                    "[" + sdata["node_name"] + "]:" + \
+                                    sdata["quantity"]           
+            # get sensor data
+            sdata[value.label] = node.get_dimmer_level(value_id)
+            # assemble data
+            data = {"sensor_data":{}}
+            data["sensor_data"].update(sdata)
+            # post data
+            print(data)
+            return str(get_json(json.dumps(data)))   # return a string
+        return ""    	   	
+
+    def read_dimmer_value(self, node_id, value_id):
+        """
+            Read one dimmer level value from a specified node, after which the 
+            data will be posted to BuildingDepot using RESTful api.
+
+            Note: The sensor points will be skipped once the value is not 
+            specified in zwave.json (listen item) or the node is not connected 
+            property.
+
+            Args:
+                node_id: the id of sepcified node
+                value_id: the id of value (sensor point) on the specified node
+            Return:
+                status string indicates the sensing and posting process
+        """
+        node = self.network.nodes[node_id]
+        value = node.values[value_id]
+        if node_id in self.listen and \
+             value.label in self.listen[node_id] and\
+             ZwaveNetwork.check_node_connection(self.network, node_id) and\
+             value_id in node.get_dimmers():
+            value.refresh()
+            sdata = {}
+            sdata["node_name"] = self.network.nodes[node_id].name
+            sdata["home_id"] = str(self.network.home_id)
+            sdata["node_id"] = str(node_id)
+            sdata["mac_id"] = ZwaveSensor.get_mac_id(node)
+            sdata["quantity"] = value.label
+            sdata["units"] = "%"
+            sdata["identifier"] = sdata["home_id"] + ":" + sdata["node_id"] + \
+                                    "[" + sdata["node_name"] + "]:" + \
+                                    sdata["quantity"]           
+            # get sensor data
+            sdata[value.label] = node.get_dimmer_level(value_id)
+            # assemble data
+            data = {"sensor_data":{}}
+            data["sensor_data"].update(sdata)
+            # post data
+            print(data)
+            return str(get_json(json.dumps(data)))   # return a string
+        return ""    	
+
+    def read_battery_value(self, node_id, value_id):
+        """
+            Read one battery level value from a specified node, after which the data will be posted to BuildingDepot using RESTful api.
+
+            Note: The sensor points will be skipped once the value is not 
+            specified in zwave.json (listen item) or the node is not connected 
+            property.
+
+            Args:
+                node_id: the id of sepcified node
+                value_id: the id of value (sensor point) on the specified node
+            Return:
+                status string indicates the sensing and posting process
+        """
+        node = self.network.nodes[node_id]
+        value = node.values[value_id]
+        if node_id in self.listen and \
+             value.label in self.listen[node_id] and\
+             ZwaveNetwork.check_node_connection(self.network, node_id) and\
+             value_id in node.get_battery_levels():
+            value.refresh()
+            sdata = {}
+            sdata["node_name"] = self.network.nodes[node_id].name
+            sdata["home_id"] = str(self.network.home_id)
+            sdata["node_id"] = str(node_id)
+            sdata["mac_id"] = ZwaveSensor.get_mac_id(node)
+            sdata["quantity"] = value.label
+            sdata["units"] = "%"
+            sdata["identifier"] = sdata["home_id"] + ":" + sdata["node_id"] + \
+                                    "[" + sdata["node_name"] + "]:" + \
+                                    sdata["quantity"]           
+            # get sensor data
+            sdata[value.label] = node.get_battery_level(value_id)
+            # assemble data
+            data = {"sensor_data":{}}
+            data["sensor_data"].update(sdata)
+            # post data
+            print(data)
+            return str(get_json(json.dumps(data)))   # return a string
+        return ""
+
+    def read_thermostats_value(self, node_id, value_id):
+        """
+            Read one thermostats value from a specified node, after which the 
+            data will be posted to BuildingDepot using RESTful api.
+
+            Note: The sensor points will be skipped once the value is not 
+            specified in zwave.json (listen item) or the node is not connected 
+            property.
+
+            Args:
+                node_id: the id of sepcified node
+                value_id: the id of value (sensor point) on the specified node
+            Return:
+                status string indicates the sensing and posting process
+        """
+        node = self.network.nodes[node_id]
+        value = node.values[value_id]
+        if node_id in self.listen and \
+             value.label in self.listen[node_id] and\
+             ZwaveNetwork.check_node_connection(self.network, node_id) and\
+             value_id in node.get_thermostats():
+            value.refresh()
+            sdata = {}
+            sdata["node_name"] = self.network.nodes[node_id].name
+            sdata["home_id"] = str(self.network.home_id)
+            sdata["node_id"] = str(node_id)
+            sdata["mac_id"] = ZwaveSensor.get_mac_id(node)
+            sdata["quantity"] = value.label
+            sdata["units"] = value.units
+            sdata["identifier"] = sdata["home_id"] + ":" + sdata["node_id"] + \
+                                    "[" + sdata["node_name"] + "]:" + \
+                                    sdata["quantity"]           
+            # get sensor data
+            sdata[value.label] = node.get_thermostat_value(value_id)
+            # assemble data
+            data = {"sensor_data":{}}
+            data["sensor_data"].update(sdata)
+            # post data
+            print(data)
+            return str(get_json(json.dumps(data)))   # return a string
+        return ""
+
     def read_sensor_value(self, node_id, value_id):
         """
             Read one sensor value from a specified node, after which the data 
@@ -274,7 +482,8 @@ class ZwaveSensor:
         value = node.values[value_id]
         if node_id in self.listen and \
              value.label in self.listen[node_id] and\
-             ZwaveNetwork.check_node_connection(self.network, node_id):
+             ZwaveNetwork.check_node_connection(self.network, node_id) and \
+             value_id in node.get_sensors():
             value.refresh()
             sdata = {}
             sdata["node_name"] = self.network.nodes[node_id].name
@@ -330,6 +539,26 @@ class ZwaveSensor:
             tmp = self.read_sensor_value(node_id, val_id)
             if not tmp.isspace():
                 msg = msg + tmp + "\n"
+            tmp = ""
+            tmp = self.read_thermostats_value(node_id, val_id)
+            if not tmp.isspace():
+            	msg = msg + tmp + "\n"
+            tmp = ""
+            tmp = self.read_battery_value(node_id, val_id)
+            if not tmp.isspace():
+            	msg = msg + tmp + "\n"
+            tmp = ""
+            tmp = self.read_dimmer_value(node_id, val_id)
+            if not tmp.isspace():
+            	msg = msg + tmp + "\n"
+            tmp = ""
+            tmp = self.read_rgbbulbs_value(node_id, val_id)
+            if not tmp.isspace():
+            	msg = msg + tmp + "\n"
+            tmp = ""
+            tmp = self.read_power_level(node_id, val_id)
+            if not tmp.isspace():
+            	msg = msg + tmp + "\n"
         return msg
 
 class ZwaveActuator:
@@ -475,6 +704,7 @@ class task_thread(threading.Thread):
                 msg = "Bye"
                 exit = True
         except Exception as e:
+            print(e)
             msg += "Bad Arguments"
         finally:
             self.conn.send(msg)

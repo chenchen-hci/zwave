@@ -1,6 +1,26 @@
 # ZWave Device Connector 
 Zwave device connector for BuildingDepotV3.6 [Done! :tada:]
 
+## Update on 16 January 2017:
+
+*  Further generalization of `zwave_network.py`;
+*  Better formalization of returned status string when interacting with `sens_zwave.py`;
+
+## Features [updated on 16 January 2017]
+
+The zwave connector module has been generalized for most of zwave related device.
+
+The compatible value/sensor points includes:
+
+*  various sensor data, e.g. temperatures, humidity etc.;
+*  thermostats;
+*  GRB bulbs;
+*  dimmers;
+*  node battery levels;
+*  node power levels;
+*  switches, e.g. sending control commands to smart plugs;
+
+
 ## General Phylosophy
 
 The main challenge that the zwave device connector face is the slow speed for establish of zwave network. Typically the creation of zwave network will take roughly 10 ~ 20 seconds. Therefore the sampling frequency of device connector can be degenerated due to this fact. 
