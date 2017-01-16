@@ -137,7 +137,7 @@ if __name__ == "__main__":
     if len(sys.argv) < 2 or sys.argv[1] == "-u":
         usage(sys.argv)
     elif sys.argv[1] == "-s":
-        cmd_str = "sudo python zwave.py"
+        cmd_str = "sudo python zwave_network.py"
         os.system(cmd_str)
     else:
         main(sys.argv)
