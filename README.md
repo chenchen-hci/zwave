@@ -98,6 +98,12 @@ The detail of `/config/zwave.json` file can be demostrated as follows:
 *  write_console: whether the logging information need be printed on console;
 *  port: the socket port by which `zwave_network.py` is used to communicate with `sens_zwave.py`, which can be arbitary non-well known available port;
 *  MAX_THREAD: the max number of thread that the instance of `ZwaveNetwork` of `zwave_network.py` can handle;
+*  mapping: the user defined mapping between node id and node name. In particular, the node id is essentially the sequence of device during zwave device pairing process which should be a positive integer larger or equal to 2. The node id of 1 is specially reserved for zwave controller hub/Zwave USB stick;
+*  config: parameter configurations. This is various within different device which normally can look up from manufacturer's user guide. For example the parameter of 111 of AeotecMultisensor6 indicate the sampling period of the device, i.e the time interval for device the update and sending data. The value of this parameter is in the units of seconds;
+* listen: specify the the data of which sensor points of each nodes need be collected (and published to BuildingDepot stack). For example, following configuration indicates only Ultraviolet and Temperature are needed for node 2 with remaining values being discarded;
+```
+"2": [Ultraviolet, Temperature] 
+```
 
 ## Getting Started
 
@@ -114,9 +120,24 @@ The detail of `/config/zwave.json` file can be demostrated as follows:
    $ python sens_zwave.py -s      # start network service
    ``` 
 
-<i>
-Dead Node: A node is loose connection with network intentionally or accidently, which, for instance, may be caused by accidently power outage etc.</i>
+## Terminologies
+### Essential Concepts
 
+*  node: sensor node in zwave network;
+*  sensor points/values: each node may have multiple sensor points/values, for example a AeotecMultisensor6 node will have 6 values/sensor points;
+*  node id: each node will be assigned a node id (a integer larger than 1) according to the sequence of device pairing. The node with id 1 is the zwave controller hub/zwave stick;
+*  home id: each zwave network will have their own home id. The home ids of all nodes in same zwave network are identical;
+*  mac id: a concatenation of manufacturer id, product type id and product id, which is used to uniquely identify a hardware. In particular, all sensor points/values in same node shares same mac id;
+*  source identifier: a string in the format of `home_id:node_id[node_name]:value`, which is used to identify each sensor source/sensor points;
+
+### Tags List:
+
+* node_name: the name of node;
+* quantity: the value of the node, such as temperature;
+* home_id: number used to identify a zwave network;
+* node_id: id of a node;
+* units: the units of sensed data;
+* mac_id: hardware id used to identify each sensor points (used as identity);
 
 <hr/>
 <i> Updated on Monday, 15 January, 2017 </i>
