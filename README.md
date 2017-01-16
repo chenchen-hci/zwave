@@ -208,6 +208,6 @@ In many cases, it is very often to compare time series data with a reference val
 [2] T.Weng, A.Nwokafor, Y.Agarwal, "BuildingDepot 2.0: An Integrated Management System for Building Analysis and Control", Buildsys' 13, November 2013.
 
 <hr/>
-<i> Updated on Sunday, 15 January, 2017 </i>
+<i> Updated on Monday 16 January, 2017 </i>
 
 
