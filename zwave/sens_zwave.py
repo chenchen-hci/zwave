@@ -62,27 +62,29 @@ def socket_init():
         sys.exit("Socket Creation Failed\n" + str(e))
 
 def recv_timeout(the_socket, timeout = 3):
-    #make socket non blocking
-    the_socket.setblocking(0)
-    #total data partwise in an array
+    """
+        wrapper for receiving data from socket.
+      
+        Args: 
+            the_socket: reference of the socket
+            time_out: specify the maximum time for data transmission
+        Return:
+            String for reponse information
+    """
+    the_socket.setblocking(0)           # make socket non blocking
     total_data=[];
     data='';
-    #beginning time
     begin=time.time()
     while True:
-        #if got some data, then break after timeout
         if total_data and time.time()-begin > timeout * 2:
             break
-        #if got no data at all, wait a little longer, twice the timeout
         elif time.time()-begin > timeout:
             break
-        #recv something
         try:
             data = the_socket.recv(1024)
             if data and not data.isspace():
                 total_data.append(data)
-                #change the beginning time for measurement
-                begin = time.time()
+                begin = time.time()    # update beginning time
         except:
             pass
     return ''.join(total_data)
