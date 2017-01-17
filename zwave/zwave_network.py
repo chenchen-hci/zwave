@@ -19,6 +19,7 @@ from openzwave.scene import ZWaveScene
 from openzwave.controller import ZWaveController
 from openzwave.network import ZWaveNetwork
 from openzwave.option import ZWaveOption
+from louie import dispatcher, All
 
 """
     About:
@@ -69,6 +70,7 @@ from openzwave.option import ZWaveOption
 CONFIG = "zwave"         # zwave.json file
 MAX_THREAD = 1
 threads = []             # thread pool
+listen = {}
 
 class ZwaveNetwork:
     """
@@ -81,6 +83,7 @@ class ZwaveNetwork:
             Initialize using zwave.json config file defined in CONFIG variable
         """
         global MAX_THREAD
+        global listen
         multisensor_cred = Setting(CONFIG)
         self.device = str(multisensor_cred.setting["device"])
         self.log = str(multisensor_cred.setting["log"])
@@ -94,6 +97,12 @@ class ZwaveNetwork:
             for k, v in config_v.iteritems():
                 item[int(k)] = int(v)   
             self.config[int(config_k)] = item
+
+        for k, v in multisensor_cred.setting["listen"].items():
+            item = []
+            for node in v:
+                item.append(str(node))
+            listen[int(k)] = item
 
         self.mapping  = {int(k): str(v) \
             for k, v in multisensor_cred.setting["mapping"].iteritems()}
@@ -234,13 +243,6 @@ class ZwaveSensor:
         multisensor_cred = Setting(CONFIG)
         self.network = network.network   # nethwork instance
 
-        self.listen = {}
-        for k, v in multisensor_cred.setting["listen"].items():
-            item = []
-            for node in v:
-                item.append(str(node))
-            self.listen[int(k)] = item 
-
     @staticmethod
     def get_mac_id(node):
         """
@@ -270,10 +272,11 @@ class ZwaveSensor:
             Return:
                 status string indicates the sensing and posting process
         """
+        global listen
         node = self.network.nodes[node_id]
         value = node.values[value_id]
-        if node_id in self.listen and \
-             value.label in self.listen[node_id] and\
+        if node_id in listen and \
+             value.label in listen[node_id] and\
              ZwaveNetwork.check_node_connection(self.network, node_id) and\
              value_id in node.get_power_levels():
             value.refresh()
@@ -295,7 +298,7 @@ class ZwaveSensor:
             # post data
             print(data)
             return str(get_json(json.dumps(data)))   # return a string
-        return ""    	   	    	
+        return ""                   
 
     def read_rgbbulbs_value(self, node_id, value_id):
         """
@@ -311,10 +314,11 @@ class ZwaveSensor:
             Return:
                 status string indicates the sensing and posting process
         """
+        global listen
         node = self.network.nodes[node_id]
         value = node.values[value_id]
-        if node_id in self.listen and \
-             value.label in self.listen[node_id] and\
+        if node_id in listen and \
+             value.label in listen[node_id] and\
              ZwaveNetwork.check_node_connection(self.network, node_id) and\
              value_id in node.get_rgbbulbs():
             value.refresh()
@@ -336,7 +340,7 @@ class ZwaveSensor:
             # post data
             print(data)
             return str(get_json(json.dumps(data)))   # return a string
-        return ""    	   	
+        return ""           
 
     def read_dimmer_value(self, node_id, value_id):
         """
@@ -353,10 +357,11 @@ class ZwaveSensor:
             Return:
                 status string indicates the sensing and posting process
         """
+        global listen
         node = self.network.nodes[node_id]
         value = node.values[value_id]
-        if node_id in self.listen and \
-             value.label in self.listen[node_id] and\
+        if node_id in listen and \
+             value.label in listen[node_id] and\
              ZwaveNetwork.check_node_connection(self.network, node_id) and\
              value_id in node.get_dimmers():
             value.refresh()
@@ -378,7 +383,7 @@ class ZwaveSensor:
             # post data
             print(data)
             return str(get_json(json.dumps(data)))   # return a string
-        return ""    	
+        return ""       
 
     def read_battery_value(self, node_id, value_id):
         """
@@ -394,10 +399,11 @@ class ZwaveSensor:
             Return:
                 status string indicates the sensing and posting process
         """
+        global listen
         node = self.network.nodes[node_id]
         value = node.values[value_id]
-        if node_id in self.listen and \
-             value.label in self.listen[node_id] and\
+        if node_id in listen and \
+             value.label in listen[node_id] and\
              ZwaveNetwork.check_node_connection(self.network, node_id) and\
              value_id in node.get_battery_levels():
             value.refresh()
@@ -436,10 +442,11 @@ class ZwaveSensor:
             Return:
                 status string indicates the sensing and posting process
         """
+        global listen
         node = self.network.nodes[node_id]
         value = node.values[value_id]
-        if node_id in self.listen and \
-             value.label in self.listen[node_id] and\
+        if node_id in listen and \
+             value.label in listen[node_id] and\
              ZwaveNetwork.check_node_connection(self.network, node_id) and\
              value_id in node.get_thermostats():
             value.refresh()
@@ -478,10 +485,11 @@ class ZwaveSensor:
             Return:
                 status string indicates the sensing and posting process
         """
+        global listen
         node = self.network.nodes[node_id]
         value = node.values[value_id]
-        if node_id in self.listen and \
-             value.label in self.listen[node_id] and\
+        if node_id in listen and \
+             value.label in listen[node_id] and\
              ZwaveNetwork.check_node_connection(self.network, node_id) and \
              value_id in node.get_sensors():
             value.refresh()
@@ -542,24 +550,41 @@ class ZwaveSensor:
             tmp = ""
             tmp = self.read_thermostats_value(node_id, val_id)
             if not tmp.isspace():
-            	msg = msg + tmp + "\n"
+                msg = msg + tmp + "\n"
             tmp = ""
             tmp = self.read_battery_value(node_id, val_id)
             if not tmp.isspace():
-            	msg = msg + tmp + "\n"
+                msg = msg + tmp + "\n"
             tmp = ""
             tmp = self.read_dimmer_value(node_id, val_id)
             if not tmp.isspace():
-            	msg = msg + tmp + "\n"
+                msg = msg + tmp + "\n"
             tmp = ""
             tmp = self.read_rgbbulbs_value(node_id, val_id)
             if not tmp.isspace():
-            	msg = msg + tmp + "\n"
+                msg = msg + tmp + "\n"
             tmp = ""
             tmp = self.read_power_level(node_id, val_id)
             if not tmp.isspace():
-            	msg = msg + tmp + "\n"
+                msg = msg + tmp + "\n"
         return msg
+
+    @staticmethod
+    def is_alarm(network, node_id, value_id):
+        """
+           justify whether the updated value is alarm
+        """
+        node = network.nodes[node_id]
+        if value_id in node.get_sensors() or \
+          value_id in node.get_power_levels() or \
+          value_id in node.get_rgbbulbs() or \
+          value_id in node.get_dimmers() or \
+          value_id in node.get_battery_levels() or \
+          value_id in node.get_thermostats() or \
+          value_id in node.get_switches_all() or \
+          value_id in node.get_protections():
+            return False
+        return True   
 
 class ZwaveActuator:
     """
@@ -698,7 +723,7 @@ class task_thread(threading.Thread):
                 else:
                     msg = msg + "Device Not Found\n"
             elif cmds[0] == "-q":
-                MAX_THREAD = 0  # dosen't allow any more thread to come 
+                MAX_THREAD = 1  # dosen't allow any more thread to come 
                 msg = "Bye"
                 exit = True
         except Exception as e:
@@ -733,6 +758,62 @@ def socket_init():
     except Exception as e:
         sys.exit("Socket Creation Failed\n" + str(e))
 
+
+def louie_network_ready():
+    """
+        initial signal handler
+    """
+    dispatcher.connect(louie_value_update, ZWaveNetwork.SIGNAL_VALUE)
+
+
+def louie_value_update(network, node, value):
+    """
+        signal handler when value is received/updated
+
+        $$ only update of 'alarme type value' will be processed.
+    """
+    global threads
+    global listen
+    if node.node_id in listen \
+        and value.label in listen[node.node_id] \
+        and len(threads) < MAX_THREAD \
+        and ZwaveSensor.is_alarm(network, node.node_id, value.value_id):
+        data = {"sensor_data":{}}
+        sdata = {}
+        sdata["node_name"] = node.name
+        sdata["home_id"] = str(network.home_id)
+        sdata["node_id"] = str(node.node_id)
+        sdata["mac_id"] = ZwaveSensor.get_mac_id(node)
+        sdata["quantity"] = value.label
+        sdata["units"] = value.units
+        sdata[value.label] = value.data_as_string
+        sdata["identifier"] = sdata["home_id"] + ":" + sdata["node_id"] + \
+                                    "[" + sdata["node_name"] + "]:" + \
+                                    sdata["quantity"]       
+        data["sensor_data"].update(sdata)
+        # start a new thread for posting data
+        newthread = threading.Thread(target=thread_post_bd, \
+                    args=(copy.deepcopy(data),))
+        threads.append(newthread)
+        newthread.start()
+
+def thread_post_bd(data):
+    """
+        a thread routine to post the passed in data to building depot
+    
+        Args: snesed data:
+            sensor_data: {
+                <attribute/meta data>
+                <sensor data>
+            }
+        Return: None
+    """
+    print(data)
+    print(get_json(json.dumps(data)))   # has some issues here!
+    # remove from pool after finishing
+    if threading.current_thread() in threads:
+        threads.remove(threading.current_thread())
+
 def main():
     """
         Main of the zwave network engine.
@@ -747,19 +828,20 @@ def main():
     global threads
     network = ZwaveNetwork()
     network.network_init()
-    network.network_awake()
+    dispatcher.connect(louie_network_ready, ZWaveNetwork.SIGNAL_NETWORK_READY)
     network.config_all_nodes()
+    network.network_awake()
     sock = socket_init()
 
     try:
         while True:
             (conn, (ip, port)) = sock.accept()
-            if len(threads) > MAX_THREAD:
+            if len(threads) >= MAX_THREAD:
                 conn.close()
             else:
                 newthread = task_thread(conn, sock, network)
-                newthread.start()
                 threads.append(newthread)
+                newthread.start()
     except Exception as e:         # if socket is closed by quit thread
         print("Socket Closed, Program Exited")
         sock.close()               # close socket

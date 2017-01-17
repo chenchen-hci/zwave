@@ -1,6 +1,10 @@
 # ZWave Device Connector 
 Zwave device connector for BuildingDepotV3.6 [Done! :tada:]
 
+## Update on 17 January 2017:
+
+*  Add features for dealing with alarm type signal, e.g. motion, vibrator sensor;
+
 ## Update on 16 January 2017:
 
 *  Further generalization of `zwave_network.py`;
@@ -208,6 +212,6 @@ In many cases, it is very often to compare time series data with a reference val
 [2] T.Weng, A.Nwokafor, Y.Agarwal, "BuildingDepot 2.0: An Integrated Management System for Building Analysis and Control", Buildsys' 13, November 2013.
 
 <hr/>
-<i> Updated on Monday 16 January, 2017 </i>
+<i> Updated on Tuesday 17 January, 2017 </i>
 
 
