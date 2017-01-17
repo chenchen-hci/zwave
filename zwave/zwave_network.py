@@ -792,12 +792,12 @@ def louie_value_update(network, node, value):
                                     sdata["quantity"]       
         data["sensor_data"].update(sdata)
         # start a new thread for posting data
-        newthread = threading.Thread(target=thread_post_bd, \
+        newthread = threading.Thread(target=alarm_thread_post_bd, \
                     args=(copy.deepcopy(data),))
         threads.append(newthread)
         newthread.start()
 
-def thread_post_bd(data):
+def alarm_thread_post_bd(data):
     """
         a thread routine to post the passed in data to building depot
     
