@@ -1,6 +1,10 @@
 # ZWave Device Connector 
 Zwave device connector for BuildingDepotV3.6 [Done! :tada:]
 
+## Update on 18 January 2017:
+
+* Fix issues of library compatibility. Now there are need for helper module `post_bd.py`;
+
 ## Update on 17 January 2017:
 
 *  Add features for dealing with alarm type signal, e.g. motion, vibrator sensor;
@@ -10,6 +14,10 @@ Zwave device connector for BuildingDepotV3.6 [Done! :tada:]
 *  Further generalization of `zwave_network.py`;
 *  Better formalization of returned status string when interacting with `sens_zwave.py`;
 *  Remove client id/key and email field of `config/bd_setting.json` for the purpose of security;
+
+## Configurations of Device Parameters:
+
+Look-up tables for parameter settings in `zwave.json` can be referred to [3].
 
 ## Features [updated on 16 January 2017]
 
@@ -210,6 +218,8 @@ In many cases, it is very often to compare time series data with a reference val
 [1] python-openzwave library, [Online] Available at: <[https://github.com/OpenZWave/python-openzwave](https://github.com/OpenZWave/python-openzwave)> [Accessed on January 5, 2017]
 
 [2] T.Weng, A.Nwokafor, Y.Agarwal, "BuildingDepot 2.0: An Integrated Management System for Building Analysis and Control", Buildsys' 13, November 2013.
+
+[3] Library of Zwave Certified Device, [Online], Available at: <http://products.z-wavealliance.org/> [Accessed on January 18, 2017]
 
 <hr/>
 <i> Updated on Tuesday 17 January, 2017 </i>
