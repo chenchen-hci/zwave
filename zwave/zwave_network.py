@@ -244,7 +244,7 @@ class ZwaveSensor:
         self.network = network.network   # nethwork instance
 
     @staticmethod
-    def get_mac_id(node):
+    def get_mac_id(node, value):
         """
             Assemble manufacturer id, product type and product id to standard 
             mac assress format.
@@ -255,7 +255,21 @@ class ZwaveSensor:
         mac_str= node.manufacturer_id[2:] + \
             node.product_type[2:] + \
             node.product_id[2:]
-        return ':'.join(mac_str[i:i+2] for i in range(0, len(mac_str), 2))
+        mac_str = ':'.join(mac_str[i:i+2] for i in range(0, len(mac_str), 2))
+        return mac_str + '_' + value.label
+
+    @staticmethod
+    def get_source_name(network, node, value):
+        """
+            build src name for each sensor points
+        """
+        src = []
+        src.append(hex(network.home_id))
+        src.append(node.name)
+        src.append(value.label)
+        if not value.units == '':
+            src.append(value.units)
+        return '_'.join(src)
 
     def read_power_level(self, node_id, value_id):
         """
@@ -280,17 +294,10 @@ class ZwaveSensor:
              ZwaveNetwork.check_node_connection(self.network, node_id) and\
              value_id in node.get_power_levels():
             sdata = {}
-            sdata["node_name"] = self.network.nodes[node_id].name
-            sdata["home_id"] = str(self.network.home_id)
-            sdata["node_id"] = str(node_id)
-            sdata["mac_id"] = ZwaveSensor.get_mac_id(node)
-            sdata["quantity"] = value.label
-            sdata["units"] = ""
-            sdata["identifier"] = sdata["home_id"] + ":" + sdata["node_id"] + \
-                                    "[" + sdata["node_name"] + "]:" + \
-                                    sdata["quantity"]           
+            sdata["mac_id"] = ZwaveSensor.get_mac_id(node, value)         
             # get sensor data
-            sdata[value.label] = node.get_power_level(value_id)
+            sdata[ZwaveSensor.get_source_name(self.network, node, value)] = \
+                node.get_power_level(value_id)
             # assemble data
             data = {"sensor_data":{}}
             data["sensor_data"].update(sdata)
@@ -321,17 +328,10 @@ class ZwaveSensor:
              ZwaveNetwork.check_node_connection(self.network, node_id) and\
              value_id in node.get_rgbbulbs():
             sdata = {}
-            sdata["node_name"] = self.network.nodes[node_id].name
-            sdata["home_id"] = str(self.network.home_id)
-            sdata["node_id"] = str(node_id)
-            sdata["mac_id"] = ZwaveSensor.get_mac_id(node)
-            sdata["quantity"] = value.label
-            sdata["units"] = "%"
-            sdata["identifier"] = sdata["home_id"] + ":" + sdata["node_id"] + \
-                                    "[" + sdata["node_name"] + "]:" + \
-                                    sdata["quantity"]           
+            sdata["mac_id"] = ZwaveSensor.get_mac_id(node, value)          
             # get sensor data
-            sdata[value.label] = node.get_dimmer_level(value_id)
+            sdata[ZwaveSensor.get_source_name(self.network, node, value)] = \
+                node.get_dimmer_level(value_id)
             # assemble data
             data = {"sensor_data":{}}
             data["sensor_data"].update(sdata)
@@ -363,17 +363,10 @@ class ZwaveSensor:
              ZwaveNetwork.check_node_connection(self.network, node_id) and\
              value_id in node.get_dimmers():
             sdata = {}
-            sdata["node_name"] = self.network.nodes[node_id].name
-            sdata["home_id"] = str(self.network.home_id)
-            sdata["node_id"] = str(node_id)
-            sdata["mac_id"] = ZwaveSensor.get_mac_id(node)
-            sdata["quantity"] = value.label
-            sdata["units"] = "%"
-            sdata["identifier"] = sdata["home_id"] + ":" + sdata["node_id"] + \
-                                    "[" + sdata["node_name"] + "]:" + \
-                                    sdata["quantity"]           
+            sdata["mac_id"] = ZwaveSensor.get_mac_id(node, value)          
             # get sensor data
-            sdata[value.label] = node.get_dimmer_level(value_id)
+            sdata[ZwaveSensor.get_source_name(self.network, node, value)] = \
+                node.get_dimmer_level(value_id)
             # assemble data
             data = {"sensor_data":{}}
             data["sensor_data"].update(sdata)
@@ -404,17 +397,10 @@ class ZwaveSensor:
              ZwaveNetwork.check_node_connection(self.network, node_id) and\
              value_id in node.get_battery_levels():
             sdata = {}
-            sdata["node_name"] = self.network.nodes[node_id].name
-            sdata["home_id"] = str(self.network.home_id)
-            sdata["node_id"] = str(node_id)
-            sdata["mac_id"] = ZwaveSensor.get_mac_id(node)
-            sdata["quantity"] = value.label
-            sdata["units"] = "%"
-            sdata["identifier"] = sdata["home_id"] + ":" + sdata["node_id"] + \
-                                    "[" + sdata["node_name"] + "]:" + \
-                                    sdata["quantity"]           
+            sdata["mac_id"] = ZwaveSensor.get_mac_id(node, value)          
             # get sensor data
-            sdata[value.label] = node.get_battery_level(value_id)
+            sdata[ZwaveSensor.get_source_name(self.network, node, value)] = \
+                node.get_battery_level(value_id)
             # assemble data
             data = {"sensor_data":{}}
             data["sensor_data"].update(sdata)
@@ -446,17 +432,10 @@ class ZwaveSensor:
              ZwaveNetwork.check_node_connection(self.network, node_id) and\
              value_id in node.get_thermostats():
             sdata = {}
-            sdata["node_name"] = self.network.nodes[node_id].name
-            sdata["home_id"] = str(self.network.home_id)
-            sdata["node_id"] = str(node_id)
-            sdata["mac_id"] = ZwaveSensor.get_mac_id(node)
-            sdata["quantity"] = value.label
-            sdata["units"] = value.units
-            sdata["identifier"] = sdata["home_id"] + ":" + sdata["node_id"] + \
-                                    "[" + sdata["node_name"] + "]:" + \
-                                    sdata["quantity"]           
+            sdata["mac_id"] = ZwaveSensor.get_mac_id(node)          
             # get sensor data
-            sdata[value.label] = node.get_thermostat_value(value_id)
+            sdata[ZwaveSensor.get_source_name(self.network, node, value)] = \
+                node.get_thermostat_value(value_id)
             # assemble data
             data = {"sensor_data":{}}
             data["sensor_data"].update(sdata)
@@ -488,17 +467,10 @@ class ZwaveSensor:
              ZwaveNetwork.check_node_connection(self.network, node_id) and \
              value_id in node.get_sensors():
             sdata = {}
-            sdata["node_name"] = self.network.nodes[node_id].name
-            sdata["home_id"] = str(self.network.home_id)
-            sdata["node_id"] = str(node_id)
-            sdata["mac_id"] = ZwaveSensor.get_mac_id(node)
-            sdata["quantity"] = value.label
-            sdata["units"] = value.units
-            sdata["identifier"] = sdata["home_id"] + ":" + sdata["node_id"] + \
-                                    "[" + sdata["node_name"] + "]:" + \
-                                    sdata["quantity"]           
+            sdata["mac_id"] = ZwaveSensor.get_mac_id(node, value)     
             # get sensor data
-            sdata[value.label] = node.get_sensor_value(value_id)
+            sdata[ZwaveSensor.get_source_name(self.network, node, value)] = \
+                node.get_sensor_value(value_id)
             # assemble data
             data = {"sensor_data":{}}
             data["sensor_data"].update(sdata)
@@ -774,16 +746,8 @@ def louie_value_update(network, node, value):
         and ZwaveSensor.is_alarm(network, node.node_id, value.value_id):
         data = {"sensor_data":{}}
         sdata = {}
-        sdata["node_name"] = node.name
-        sdata["home_id"] = str(network.home_id)
-        sdata["node_id"] = str(node.node_id)
-        sdata["mac_id"] = ZwaveSensor.get_mac_id(node)
-        sdata["quantity"] = value.label
-        sdata["units"] = value.units
-        sdata[value.label] = value.data_as_string
-        sdata["identifier"] = sdata["home_id"] + ":" + sdata["node_id"] + \
-                                    "[" + sdata["node_name"] + "]:" + \
-                                    sdata["quantity"]       
+        sdata["mac_id"] = ZwaveSensor.get_mac_id(node, value)
+        sdata[value.label] = value.data_as_string     
         data["sensor_data"].update(sdata)
         # start a new thread for posting data
         newthread = threading.Thread(target=alarm_thread_post_bd, \
