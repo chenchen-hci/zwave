@@ -4,7 +4,7 @@
 import json
 import time
 import sys
-from Connectors.zwave.post_bd import get_json
+from bd_connect.connect_bd import get_json
 from config.setting import Setting
 import logging
 import os
@@ -279,7 +279,6 @@ class ZwaveSensor:
              value.label in listen[node_id] and\
              ZwaveNetwork.check_node_connection(self.network, node_id) and\
              value_id in node.get_power_levels():
-            value.refresh()
             sdata = {}
             sdata["node_name"] = self.network.nodes[node_id].name
             sdata["home_id"] = str(self.network.home_id)
@@ -321,7 +320,6 @@ class ZwaveSensor:
              value.label in listen[node_id] and\
              ZwaveNetwork.check_node_connection(self.network, node_id) and\
              value_id in node.get_rgbbulbs():
-            value.refresh()
             sdata = {}
             sdata["node_name"] = self.network.nodes[node_id].name
             sdata["home_id"] = str(self.network.home_id)
@@ -364,7 +362,6 @@ class ZwaveSensor:
              value.label in listen[node_id] and\
              ZwaveNetwork.check_node_connection(self.network, node_id) and\
              value_id in node.get_dimmers():
-            value.refresh()
             sdata = {}
             sdata["node_name"] = self.network.nodes[node_id].name
             sdata["home_id"] = str(self.network.home_id)
@@ -406,7 +403,6 @@ class ZwaveSensor:
              value.label in listen[node_id] and\
              ZwaveNetwork.check_node_connection(self.network, node_id) and\
              value_id in node.get_battery_levels():
-            value.refresh()
             sdata = {}
             sdata["node_name"] = self.network.nodes[node_id].name
             sdata["home_id"] = str(self.network.home_id)
@@ -449,7 +445,6 @@ class ZwaveSensor:
              value.label in listen[node_id] and\
              ZwaveNetwork.check_node_connection(self.network, node_id) and\
              value_id in node.get_thermostats():
-            value.refresh()
             sdata = {}
             sdata["node_name"] = self.network.nodes[node_id].name
             sdata["home_id"] = str(self.network.home_id)
@@ -492,7 +487,6 @@ class ZwaveSensor:
              value.label in listen[node_id] and\
              ZwaveNetwork.check_node_connection(self.network, node_id) and \
              value_id in node.get_sensors():
-            value.refresh()
             sdata = {}
             sdata["node_name"] = self.network.nodes[node_id].name
             sdata["home_id"] = str(self.network.home_id)
