@@ -231,6 +231,8 @@ A effective method is to only allow zwave sensor dertermine the sampling period,
 *  The connector listen to request from various zwave nodes. Once there are updates in any nodes, the connector will 'wake up' and post data to BuildingDepot;
 *  Connector will not stop unless the apps make a 'stop' call;
 
+An example 'sniffing' program can be referred to '/zwave/sens_zwave.py' module;
+
 ## References
 
 [1] python-openzwave library, [Online] Available at: <[https://github.com/OpenZWave/python-openzwave](https://github.com/OpenZWave/python-openzwave)> [Accessed on January 5, 2017]
