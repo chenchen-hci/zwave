@@ -213,6 +213,24 @@ In many cases, it is very often to compare time series data with a reference val
 *  Virtual Sensor: virtualized sensor, achieved by analyzing data from physical sensor;
 *  Online sensor: sensor data gathered from common web service, e.g. average temperature got from [weather.com](https://weather.com/);
 
+## Further Suggestions on Connector Modules:
+
+In current implementations, the connector will do following task in sequence:
+
+*  Called by client app;
+*  Read one set of data and post to buildingDepot stack or send command to switch;
+*  Exit from connector and wait the next call of client app;
+
+However since the initialization of zwave network is very slow, it is recommended to send/receive data in the contexul of instance of Network (this means idealy the zwave network is a long running program).
+
+Another problem is that using above mothod the sampling period is controlled by (external) client app. However, the fact is that every zwave device have their own frequencies for updating value, for example, the sampling period of multisensor6 can be configured by parameter 111. This may cause problems on validity of data acquired. For instance, if the sampling period of updating value is 10 seconds, while the sampling period for request is 2 seconds, there will have roughly 4/5 data being useless and hence wasting database resources.
+
+A effective method is to only allow zwave sensor dertermine the sampling period, while external client app only makes decisions on whether or not continue data acquisition. The specific process can be summarized as follows:
+
+*  External app calls the connector;
+*  The connector listen to request from various zwave nodes. Once there are updates in any nodes, the connector will 'wake up' and post data to BuildingDepot;
+*  Connector will not stop unless the apps make a 'stop' call;
+
 ## References
 
 [1] python-openzwave library, [Online] Available at: <[https://github.com/OpenZWave/python-openzwave](https://github.com/OpenZWave/python-openzwave)> [Accessed on January 5, 2017]
